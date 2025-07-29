@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--
+    poorbyportra - if your looking here, you should give me a job. pipr.tw@mgmail.com
+    -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>poorbyportra</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="site-title">POORBYPORTRA</div>
+        <nav>
+            <ul>
+                <li><button data-filter="landscape" class="active">Landscape</button></li>
+                <li><button data-filter="street">Street</button></li>
+                <li><button data-filter="travel">Travel</button></li>
+                <li><button data-filter="all">All</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="intro-container">
+            <div id="intro-toggle" class="intro-toggle">...</div>
+            <div id="intro-text-box" class="intro-text-box">
+                <p>Bit of an online scrapbook for some of my favourite photos, maybe you'll enjoy them too.</p>
+            </div>
+        </div>
+        <div id="image-grid" class="image-grid"></div>
+    </main>
+
+    <div id="modal" class="modal">
+        <span class="close-button">&times;</span>
+        <img class="modal-content" id="modal-image">
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
