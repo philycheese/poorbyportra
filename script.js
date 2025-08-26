@@ -229,6 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
         { filename: 'export-212.jpg', categories: ['travel'] },
         { filename: 'export-213.jpg', categories: ['travel'] },
         { filename: 'export-214.jpg', categories: ['travel'] },
+        { filename: 'export-215.jpg', categories: ['travel'] },
     ];
 
     // --- Functions ---
