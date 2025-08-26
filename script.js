@@ -246,14 +246,15 @@ document.addEventListener('DOMContentLoaded', () => {
             gridItem.classList.add('grid-item');
 
             const imgElement = document.createElement('img');
-            imgElement.src = `images/${imgData.filename}`; // Use filename directly
+            imgElement.src = BASE_THUMB + imgData.filename;
+            imgElement.dataset.fullSrc = BASE_FULL + imgData.filename
             const altText = imgData.categories.length > 0
                 ? `Photo - ${imgData.categories.join(', ')}`
                 : 'Photo';
             imgElement.alt = altText;
             imgElement.loading = 'lazy';
 
-            imgElement.addEventListener('click', () => openModal(`images/${imgData.filename}`)); // Pass full image path to modal
+            imgElement.addEventListener('click', () => openModal(BASE_FULL + imgData.filename));
 
             gridItem.appendChild(imgElement);
             imageGrid.appendChild(gridItem);
