@@ -326,6 +326,42 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Add touch event listeners for swipe gestures
         addSwipeListeners();
+        
+        // Preload neighboring images for smooth navigation
+        preloadNeighboringImages();
+    }
+    
+    function preloadNeighboringImages() {
+        if (!modal.navigationImages || modal.currentIndex === undefined) return;
+        
+        const imagesToPreload = [];
+        
+        // Preload previous image
+        if (modal.currentIndex > 0) {
+            const prevImage = modal.navigationImages[modal.currentIndex - 1];
+            imagesToPreload.push(BASE_FULL + prevImage.filename);
+        }
+        
+        // Preload next image
+        if (modal.currentIndex < modal.navigationImages.length - 1) {
+            const nextImage = modal.navigationImages[modal.currentIndex + 1];
+            imagesToPreload.push(BASE_FULL + nextImage.filename);
+        }
+        
+        // Create hidden image elements to preload
+        imagesToPreload.forEach(src => {
+            const img = new Image();
+            img.src = src;
+            // Store in modal for cleanup
+            if (!modal.preloadedImages) modal.preloadedImages = [];
+            modal.preloadedImages.push(img);
+        });
+    }
+    
+    function cleanupPreloadedImages() {
+        if (modal.preloadedImages) {
+            modal.preloadedImages = [];
+        }
     }
     
     function updateNavigationArrows() {
@@ -345,8 +381,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    function navigateImage(direction) {
+    function navigateImage(direction, useAnimation = false) {
         if (!modal.navigationImages || modal.currentIndex === undefined) return;
+        
+        // Prevent rapid navigation while loading
+        if (modal.isNavigating) return;
+        modal.isNavigating = true;
         
         let newIndex;
         if (direction === 'left') {
@@ -357,10 +397,58 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Check bounds
         if (newIndex >= 0 && newIndex < modal.navigationImages.length) {
+            // Add animation class based on direction (only for swipe gestures)
+            if (useAnimation) {
+                if (direction === 'left') {
+                    modalImage.classList.add('slide-right'); // Going to previous (right swipe)
+                } else {
+                    modalImage.classList.add('slide-left'); // Going to next (left swipe)
+                }
+            }
+            
+            // Update image source
             modal.currentIndex = newIndex;
             const newImage = modal.navigationImages[newIndex];
             modalImage.src = BASE_FULL + newImage.filename;
-            updateNavigationArrows();
+            
+            if (useAnimation) {
+                // Wait for image to load before completing animation
+                modalImage.onload = () => {
+                    // Remove animation classes after animation completes
+                    setTimeout(() => {
+                        modalImage.classList.remove('slide-left', 'slide-right');
+                        modal.isNavigating = false; // Allow navigation again
+                    }, 300); // Match the CSS animation duration
+                    
+                    updateNavigationArrows();
+                    
+                    // Preload new neighboring images for the new position
+                    preloadNeighboringImages();
+                };
+                
+                // Fallback in case onload doesn't fire
+                setTimeout(() => {
+                    if (modal.isNavigating) {
+                        modal.isNavigating = false;
+                    }
+                }, 1000);
+            } else {
+                // No animation - immediate navigation
+                modalImage.onload = () => {
+                    modal.isNavigating = false;
+                    updateNavigationArrows();
+                    preloadNeighboringImages();
+                };
+                
+                // Fallback for immediate navigation
+                setTimeout(() => {
+                    if (modal.isNavigating) {
+                        modal.isNavigating = false;
+                    }
+                }, 500);
+            }
+        } else {
+            modal.isNavigating = false;
         }
     }
     
@@ -390,10 +478,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
                 if (deltaX > 0) {
                     // Swipe right - go to previous image
-                    navigateImage('left');
+                    navigateImage('left', true); // Use animation
                 } else {
                     // Swipe left - go to next image
-                    navigateImage('right');
+                    navigateImage('right', true); // Use animation
                 }
             }
         };
@@ -424,15 +512,17 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.currentIndex = undefined;
         modal.currentFilter = undefined;
         modal.currentOrder = undefined;
+        modal.isNavigating = false;
         
         // Reset zoom state potentially needed if closed while zoomed
         isZoomed = false; 
         modalImage.style.transform = 'scale(1)';
         modalImage.style.transformOrigin = 'center center';
         modalImage.style.cursor = 'zoom-in';
-
+        
         // Remove swipe listeners
         removeSwipeListeners();
+        cleanupPreloadedImages(); // Clean up preloaded images on close
     }
 
     // --- Event Listeners --- 
@@ -495,20 +585,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const rightArrow = document.getElementById('nav-right');
     
     if (leftArrow) {
-        leftArrow.addEventListener('click', () => navigateImage('left'));
+        leftArrow.addEventListener('click', () => navigateImage('left', false)); // No animation
     }
     
     if (rightArrow) {
-        rightArrow.addEventListener('click', () => navigateImage('right'));
+        rightArrow.addEventListener('click', () => navigateImage('right', false)); // No animation
     }
     
     // Enhanced keyboard navigation for modal
     document.addEventListener('keydown', (event) => {
         if (modal.style.display === 'flex') {
             if (event.key === 'ArrowLeft') {
-                navigateImage('left');
+                navigateImage('left', true); // Use animation
             } else if (event.key === 'ArrowRight') {
-                navigateImage('right');
+                navigateImage('right', true); // Use animation
             } else if (event.key === 'Escape') {
                 closeModal();
             }

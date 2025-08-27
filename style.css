@@ -228,31 +228,31 @@ nav button.active {
 /* Modal Navigation Arrows */
 .nav-arrow {
     position: absolute;
-    background: none;
-    color: #999;
-    border: none;
-    font-size: 2.5rem;
-    padding: 0;
+    background: none; /* No background */
+    color: #999; /* Light grey color */
+    border: none; /* No border */
+    font-size: 2.5rem; /* Larger font size for visibility */
+    padding: 0; /* No padding */
     cursor: pointer;
-    transition: color 0.2s ease;
+    transition: color 0.2s ease; /* Only color transition */
     z-index: 1001;
     /* Simple text styling */
-    font-weight: 300;
+    font-weight: 300; /* Lighter font weight */
     text-decoration: none;
 }
 
 .nav-arrow:hover {
-    color: #333;
+    color: #333; /* Darker grey on hover */
 }
 
 .nav-left {
-    left: 20px;
+    left: 20px; /* Position further from the edge */
     top: 50%;
     transform: translateY(-50%);
 }
 
 .nav-right {
-    right: 20px;
+    right: 20px; /* Position further from the edge */
     top: 50%;
     transform: translateY(-50%);
 }
@@ -262,24 +262,69 @@ nav button.active {
     display: none;
 }
 
+/* Photo transition animations */
+.modal-content {
+    transition: transform 0.3s ease-out;
+    animation: fadeIn 0.2s ease-out;
+}
+
+.modal-content.slide-left {
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+.modal-content.slide-right {
+    animation: slideInFromLeft 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInFromRight {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInFromLeft {
+    0% {
+        transform: translateX(-100%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 /* Responsive adjustments for smaller screens */
 @media (max-width: 768px) {
     .nav-arrow {
-        font-size: 2rem;
+        font-size: 2rem; /* Slightly smaller on mobile */
         /* Position arrows below the image on mobile */
         top: auto;
         bottom: 20px;
-        transform: none;
+        transform: none; /* Reset transform for new positioning */
     }
     
     .nav-left {
         left: 50%;
-        transform: translateX(-60px);
+        transform: translateX(-60px); /* Center and offset left */
     }
     
     .nav-right {
         right: 50%;
-        transform: translateX(60px);
+        transform: translateX(60px); /* Center and offset right */
     }
     
     .modal-content {
