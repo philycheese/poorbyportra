@@ -232,7 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
         { filename: 'export-212.jpg', categories: ['all'] },
         { filename: 'export-213.jpg', categories: ['all'] },
         { filename: 'export-214.jpg', categories: ['all'] },
-        { filename: 'export-215.jpg', categories: ['all'] }
+        { filename: 'export-215.jpg', categories: ['all'] },
+        { filename: 'export-216.jpg', categories: ['all'] },
+        { filename: 'export-217.jpg', categories: ['all'] },
+        { filename: 'export-218.jpg', categories: ['all'] },
+        { filename: 'export-219.jpg', categories: ['all'] },
+        { filename: 'export-220.jpg', categories: ['all'] }
     ];
 
     // --- Functions --- 
