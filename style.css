@@ -22,7 +22,7 @@ header {
     align-items: center; 
     padding: 20px 30px; 
     border-bottom: 1px solid #eee;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
 .site-title {
@@ -34,6 +34,7 @@ header {
 
 nav ul {
     list-style: none;
+    text-align: right;
 }
 
 nav ul li {
@@ -59,30 +60,54 @@ nav button.active {
     border-bottom-color: #000;
 }
 
-/* Add padding to main content area */
-main {
-    padding: 0 20px; /* Add horizontal padding */
+/* Sort Button styled for intro area */
+.sort-btn {
+    font-family: inherit;
+    font-size: 0.85rem;
+    background: none;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 1px 15px;
+    margin-top:10px;
+    margin-right: 7px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #555;
+    min-width: 32px;
+    vertical-align: middle;
+    float: right; /* Position sort button on the right */
+}
+
+.sort-btn:hover {
+    background-color: #e0e0e0;
+    border-color: #999;
+}
+
+.sort-btn.active {
+    background-color: #666;
+    color: white;
+    border-color: #666;
 }
 
 /* Intro Text Toggle and Box */
 .intro-container {
-    text-align: center;
     margin-bottom: 20px; /* Space between intro and grid */
     overflow: hidden; /* Contain elements during transition */
     /* Add centering to match the grid */
     max-width: 1400px; /* Match grid max-width */
-    margin-left: auto; 
+    margin-left: auto;
     margin-right: auto;
 }
 
 .intro-toggle {
     display: inline-block;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     color: #888; /* Lighter grey for subtlety */
-    padding: 5px 10px;
-    margin-bottom: 10px; /* Space between toggle and potential text */
+    padding: 1px 15px;
+    margin-bottom: 6px; /* Reduced space between toggle and potential text */
     transition: color 0.3s ease;
+    float: left; /* Position ellipses on the left */
 }
 
 .intro-toggle:hover {
@@ -95,8 +120,10 @@ main {
     transition: max-height 0.5s ease-out, padding 0.5s ease-out; /* Smooth transition */
     font-size: 0.95rem;
     color: #555;
+    clear: both; /* Clear the floats */
+    text-align: center; /* Center the text */
     /* Remove initial padding */
-    /* padding: 0 20px; */ 
+    /* padding: 0 20px; */
 }
 
 .intro-text-box.show {
