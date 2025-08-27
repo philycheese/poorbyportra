@@ -2,8 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const imageGrid = document.getElementById('image-grid');
     const filterButtons = document.querySelectorAll('nav button');
     const modal = document.getElementById('modal');
-    const modalImage = document.getElementById('modal-image');
-    const closeButton = document.querySelector('.close-button');
+    const modalImage = document.getElementById('modalImage');
+    const closeButton = document.querySelector('.close');
     const siteTitle = document.querySelector('.site-title');
     const introToggle = document.getElementById('intro-toggle'); // Get the toggle element
     const introTextBox = document.getElementById('intro-text-box'); // Get the text box element
@@ -264,13 +264,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Function to display images in the grid (Now using simplified structure)
     function displayImages(filter = 'all', orderType = 'default') {
+        console.log('displayImages called with:', filter, orderType);
         imageGrid.innerHTML = ''; // Clear existing grid
         const filteredImages = images.filter(img => 
             filter === 'all' || img.categories.includes(filter)
         );
+        console.log('Filtered images count:', filteredImages.length);
 
         // Sort the filtered images
         const sortedImages = sortImages(filteredImages, orderType);
+        console.log('Sorted images count:', sortedImages.length);
 
         sortedImages.forEach(imgData => {
             const gridItem = document.createElement('div');
@@ -290,28 +293,146 @@ document.addEventListener('DOMContentLoaded', () => {
             gridItem.appendChild(imgElement);
             imageGrid.appendChild(gridItem);
         });
+        console.log('Finished adding images to grid');
     }
 
-    // Function to open the modal (Accepts full image source)
-    function openModal(srcFull) {
-        isZoomed = false; // Reset zoom state on open
-        modalImage.style.transform = 'scale(1)'; // Reset transform
-        modalImage.style.transformOrigin = 'center center'; // Reset origin
-        modalImage.style.cursor = 'zoom-in'; // Reset cursor
-        modalImage.src = srcFull; // Use the full image source passed in
-        modal.classList.add('show');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+    // --- Modal Functions ---
+    function openModal(imageSrc) {
+        modal.style.display = 'flex';
+        modalImage.src = imageSrc;
+        document.body.style.overflow = 'hidden';
+        
+        // Store current filter and sort state for navigation
+        modal.currentFilter = currentFilter;
+        modal.currentOrder = isReversed ? 'alphabetical' : 'default';
+        
+        // Get the current filtered and sorted images for navigation
+        const currentImages = images.filter(img => 
+            modal.currentFilter === 'all' || img.categories.includes(modal.currentFilter)
+        );
+        const sortedImages = sortImages(currentImages, modal.currentOrder);
+        
+        // Find current image index
+        const currentIndex = sortedImages.findIndex(img => 
+            BASE_FULL + img.filename === imageSrc
+        );
+        
+        // Store navigation data
+        modal.navigationImages = sortedImages;
+        modal.currentIndex = currentIndex;
+        
+        // Show/hide navigation arrows based on position
+        updateNavigationArrows();
+        
+        // Add touch event listeners for swipe gestures
+        addSwipeListeners();
+    }
+    
+    function updateNavigationArrows() {
+        const leftArrow = document.getElementById('nav-left');
+        const rightArrow = document.getElementById('nav-right');
+        
+        if (modal.currentIndex > 0) {
+            leftArrow.style.display = 'block';
+        } else {
+            leftArrow.style.display = 'none';
+        }
+        
+        if (modal.currentIndex < modal.navigationImages.length - 1) {
+            rightArrow.style.display = 'block';
+        } else {
+            rightArrow.style.display = 'none';
+        }
+    }
+    
+    function navigateImage(direction) {
+        if (!modal.navigationImages || modal.currentIndex === undefined) return;
+        
+        let newIndex;
+        if (direction === 'left') {
+            newIndex = modal.currentIndex - 1;
+        } else {
+            newIndex = modal.currentIndex + 1;
+        }
+        
+        // Check bounds
+        if (newIndex >= 0 && newIndex < modal.navigationImages.length) {
+            modal.currentIndex = newIndex;
+            const newImage = modal.navigationImages[newIndex];
+            modalImage.src = BASE_FULL + newImage.filename;
+            updateNavigationArrows();
+        }
+    }
+    
+    function addSwipeListeners() {
+        let startX = 0;
+        let startY = 0;
+        let endX = 0;
+        let endY = 0;
+        
+        const handleTouchStart = (e) => {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        };
+        
+        const handleTouchEnd = (e) => {
+            endX = e.changedTouches[0].clientX;
+            endY = e.changedTouches[0].clientY;
+            
+            // Calculate swipe distance and direction
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            
+            // Minimum swipe distance to trigger navigation
+            const minSwipeDistance = 50;
+            
+            // Check if it's a horizontal swipe (more horizontal than vertical)
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
+                if (deltaX > 0) {
+                    // Swipe right - go to previous image
+                    navigateImage('left');
+                } else {
+                    // Swipe left - go to next image
+                    navigateImage('right');
+                }
+            }
+        };
+        
+        // Add touch event listeners to the modal
+        modal.addEventListener('touchstart', handleTouchStart, { passive: true });
+        modal.addEventListener('touchend', handleTouchEnd, { passive: true });
+        
+        // Store listeners for cleanup
+        modal.swipeListeners = { handleTouchStart, handleTouchEnd };
+    }
+    
+    function removeSwipeListeners() {
+        if (modal.swipeListeners) {
+            modal.removeEventListener('touchstart', modal.swipeListeners.handleTouchStart);
+            modal.removeEventListener('touchend', modal.swipeListeners.handleTouchEnd);
+            modal.swipeListeners = null;
+        }
     }
 
     // Function to close the modal
     function closeModal() {
-        modal.classList.remove('show');
-        document.body.style.overflow = ''; // Restore scrolling
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+        
+        // Reset navigation state
+        modal.navigationImages = null;
+        modal.currentIndex = undefined;
+        modal.currentFilter = undefined;
+        modal.currentOrder = undefined;
+        
         // Reset zoom state potentially needed if closed while zoomed
         isZoomed = false; 
         modalImage.style.transform = 'scale(1)';
         modalImage.style.transformOrigin = 'center center';
         modalImage.style.cursor = 'zoom-in';
+
+        // Remove swipe listeners
+        removeSwipeListeners();
     }
 
     // --- Event Listeners --- 
@@ -368,11 +489,29 @@ document.addEventListener('DOMContentLoaded', () => {
             closeModal();
         }
     });
-
-    // Close modal with Escape key
+    
+    // Navigation arrows
+    const leftArrow = document.getElementById('nav-left');
+    const rightArrow = document.getElementById('nav-right');
+    
+    if (leftArrow) {
+        leftArrow.addEventListener('click', () => navigateImage('left'));
+    }
+    
+    if (rightArrow) {
+        rightArrow.addEventListener('click', () => navigateImage('right'));
+    }
+    
+    // Enhanced keyboard navigation for modal
     document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && modal.classList.contains('show')) {
-            closeModal();
+        if (modal.style.display === 'flex') {
+            if (event.key === 'ArrowLeft') {
+                navigateImage('left');
+            } else if (event.key === 'ArrowRight') {
+                navigateImage('right');
+            } else if (event.key === 'Escape') {
+                closeModal();
+            }
         }
     });
 
@@ -398,6 +537,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // loadAllImages(); // OLD METHOD
     // applyFilter(); // OLD METHOD
     // displayImages(); // Old initial call (defaulted to 'all')
+    console.log('About to call displayImages with:', 'landscape', 'alphabetical');
+    console.log('imageGrid element:', imageGrid);
+    console.log('images array length:', images.length);
     displayImages('landscape', 'alphabetical'); // New initial call, matches the default active button and reverse alphabetical order
     
     // Set initial button text to show down arrow (Z-A)

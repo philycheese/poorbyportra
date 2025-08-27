@@ -184,68 +184,107 @@ nav button.active {
 }
 */
 
-/* Modal Styles */
+/* Modal */
 .modal {
-    display: none; /* Hidden by default */
+    display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    /* background-color: rgba(0, 0, 0, 0.85); */ /* Old dark overlay */
-    background-color: #ffffff; /* CHANGED to white */
-    align-items: center;
+    background-color: #ffffff; /* Completely white background */
     justify-content: center;
-}
-
-.modal.show {
-    display: flex; /* Show the modal */
-    /* opacity: 1; */ /* REMOVED - No longer needed for transition */
+    align-items: center;
 }
 
 .modal-content {
-    display: block;
-    margin: auto;
     max-width: 90%;
-    max-height: 90vh;
-    /* Add transition for zoom effect */
+    max-height: 90%;
+    object-fit: contain;
+    cursor: zoom-in;
     transition: transform 0.3s ease;
-    cursor: zoom-in; /* Indicate zoom is possible */
+    /* Ensure image has margins so arrows don't overlap */
+    margin: 0 60px;
 }
 
-/* REMOVE Modal Animation */
-/* 
-@keyframes fadeInScale {
-    from {
-        transform: scale(0.9);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-*/
-
-.close-button {
+.close {
     position: absolute;
-    top: 20px;
+    top: 15px;
     right: 35px;
-    /* color: #f1f1f1; */ /* Old light color */
-    color: #333; /* CHANGED to dark grey */
+    color: #333; /* Dark color for white background */
     font-size: 40px;
     font-weight: bold;
     cursor: pointer;
-    transition: color 0.3s ease;
+    z-index: 1002;
 }
 
-.close-button:hover,
-.close-button:focus {
-    /* color: #bbb; */ /* Old light hover color */
-    color: #666; /* CHANGED to a medium grey for hover */
+.close:hover,
+.close:focus {
+    color: #666;
     text-decoration: none;
+}
+
+/* Modal Navigation Arrows */
+.nav-arrow {
+    position: absolute;
+    background: none;
+    color: #999;
+    border: none;
+    font-size: 2.5rem;
+    padding: 0;
+    cursor: pointer;
+    transition: color 0.2s ease;
+    z-index: 1001;
+    /* Simple text styling */
+    font-weight: 300;
+    text-decoration: none;
+}
+
+.nav-arrow:hover {
+    color: #333;
+}
+
+.nav-left {
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.nav-right {
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Hide arrows by default, they'll be shown/hidden by JavaScript */
+.nav-arrow {
+    display: none;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .nav-arrow {
+        font-size: 2rem;
+        /* Position arrows below the image on mobile */
+        top: auto;
+        bottom: 20px;
+        transform: none;
+    }
+    
+    .nav-left {
+        left: 50%;
+        transform: translateX(-60px);
+    }
+    
+    .nav-right {
+        right: 50%;
+        transform: translateX(60px);
+    }
+    
+    .modal-content {
+        margin: 0 20px 80px 20px; /* Add bottom margin for arrows */
+    }
 }
 
 /* Responsive Adjustments */
@@ -302,9 +341,10 @@ nav button.active {
         max-width: 95%;
         max-height: 85vh;
     }
-    .close-button {
-        font-size: 30px;
-        top: 15px;
-        right: 25px;
+} 
+
+@media (max-width: 768px) {
+    .modal-content {
+        margin: 0 50px;
     }
 } 
