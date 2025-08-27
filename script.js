@@ -7,14 +7,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const siteTitle = document.querySelector('.site-title');
     const introToggle = document.getElementById('intro-toggle'); // Get the toggle element
     const introTextBox = document.getElementById('intro-text-box'); // Get the text box element
+    const sortToggle = document.getElementById('sort-toggle'); // Get the sort toggle button
 
     const BASE_FULL = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/v1753994362/';
     const BASE_THUMB = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_1000,q_auto,f_auto/v1753994362/';
 
-    let isZoomed = false;
+    let isZoomed = false; // Add state variable for zoom
     let originalTitle = 'POORBYPORTRA';
+    let isReversed = true; // Track if sorting is reversed - default to true for Z-A
+    let currentFilter = 'landscape'; // Track current filter
 
-   
+
     const images = [
         { filename: 'export-001.jpg', categories: ['all'] },
         { filename: 'export-002.jpg', categories: ['landscape'] },
@@ -232,29 +235,52 @@ document.addEventListener('DOMContentLoaded', () => {
         { filename: 'export-215.jpg', categories: ['all'] }
     ];
 
-    // --- Functions ---
+    // --- Functions --- 
+
+    // Function to sort images based on current order
+    function sortImages(imagesToSort, orderType) {
+        const sortedImages = [...imagesToSort]; // Create a copy to avoid mutating original
+        
+        switch (orderType) {
+            case 'alphabetical':
+                return sortedImages.sort((a, b) => b.filename.localeCompare(a.filename)); // Reverse alphabetical (Z-A)
+            case 'random':
+                // Fisher-Yates shuffle algorithm
+                for (let i = sortedImages.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [sortedImages[i], sortedImages[j]] = [sortedImages[j], sortedImages[i]];
+                }
+                return sortedImages;
+            case 'default':
+            default:
+                return sortedImages; // Return in original order
+        }
+    }
 
     // Function to display images in the grid (Now using simplified structure)
-    function displayImages(filter = 'all') {
+    function displayImages(filter = 'all', orderType = 'default') {
         imageGrid.innerHTML = ''; // Clear existing grid
-        const filteredImages = images.filter(img =>
+        const filteredImages = images.filter(img => 
             filter === 'all' || img.categories.includes(filter)
         );
 
-        filteredImages.forEach(imgData => {
+        // Sort the filtered images
+        const sortedImages = sortImages(filteredImages, orderType);
+
+        sortedImages.forEach(imgData => {
             const gridItem = document.createElement('div');
             gridItem.classList.add('grid-item');
 
             const imgElement = document.createElement('img');
-            imgElement.src = BASE_THUMB + imgData.filename;
-            imgElement.dataset.fullSrc = BASE_FULL + imgData.filename
-            const altText = imgData.categories.length > 0
-                ? `Photo - ${imgData.categories.join(', ')}`
+            imgElement.src = BASE_THUMB + imgData.filename; // Use Cloudinary thumbnail URL
+            imgElement.dataset.fullSrc = BASE_FULL + imgData.filename; // Store full resolution URL
+            const altText = imgData.categories.length > 0 
+                ? `Photo - ${imgData.categories.join(', ')}` 
                 : 'Photo';
             imgElement.alt = altText;
-            imgElement.loading = 'lazy';
-
-            imgElement.addEventListener('click', () => openModal(BASE_FULL + imgData.filename));
+            imgElement.loading = 'lazy'; 
+            
+            imgElement.addEventListener('click', () => openModal(BASE_FULL + imgData.filename)); // Use full resolution URL for modal
 
             gridItem.appendChild(imgElement);
             imageGrid.appendChild(gridItem);
@@ -313,10 +339,21 @@ document.addEventListener('DOMContentLoaded', () => {
             filterButtons.forEach(btn => btn.classList.remove('active'));
             button.classList.add('active');
             const filterValue = button.getAttribute('data-filter');
-            // applyFilter(filterValue); // OLD METHOD
-            displayImages(filterValue); // REVERTED to this
+            currentFilter = filterValue; // Update current filter
+            displayImages(filterValue, isReversed ? 'alphabetical' : 'default'); // Pass current filter and current sort state
         });
     });
+
+    // Sort toggle click
+    if (sortToggle) {
+        sortToggle.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent any default button behavior
+            isReversed = !isReversed; // Toggle reverse state
+            sortToggle.textContent = isReversed ? '↓' : '↑'; // Show appropriate arrow
+            sortToggle.classList.toggle('active', isReversed); // Highlight when reversed
+            displayImages(currentFilter, isReversed ? 'alphabetical' : 'default'); // Pass current filter and new order
+        });
+    }
 
     // Close modal listeners
     closeButton.addEventListener('click', closeModal);
@@ -356,6 +393,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // loadAllImages(); // OLD METHOD
     // applyFilter(); // OLD METHOD
     // displayImages(); // Old initial call (defaulted to 'all')
-    displayImages('landscape'); // New initial call, matches the default active button
+    displayImages('landscape', 'alphabetical'); // New initial call, matches the default active button and reverse alphabetical order
+    
+    // Set initial button text to show down arrow (Z-A)
+    if (sortToggle) {
+        sortToggle.textContent = '↓';
+        sortToggle.classList.add('active');
+    }
 
 }); 
