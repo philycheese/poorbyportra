@@ -296,11 +296,12 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Finished adding images to grid');
     }
 
+    // Device detection
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768;
+    
     // --- Modal Functions ---
     function openModal(imageSrc) {
         modal.style.display = 'flex';
-        modalImage.src = imageSrc;
-        document.body.style.overflow = 'hidden';
         
         // Store current filter and sort state for navigation
         modal.currentFilter = currentFilter;
@@ -321,14 +322,200 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.navigationImages = sortedImages;
         modal.currentIndex = currentIndex;
         
-        // Show/hide navigation arrows based on position
-        updateNavigationArrows();
+        if (isMobile) {
+            // Mobile: Show timeline with multiple images
+            showTimeline(currentIndex);
+        } else {
+            // Desktop: Show single image with arrows
+            showSingleImage(imageSrc);
+        }
         
-        // Add touch event listeners for swipe gestures
-        addSwipeListeners();
+        document.body.style.overflow = 'hidden';
         
         // Preload neighboring images for smooth navigation
         preloadNeighboringImages();
+    }
+    
+    function showTimeline(startIndex) {
+        const timelineContainer = document.getElementById('modal-timeline');
+        const modalImage = document.getElementById('modalImage');
+        
+        // Hide single image view
+        modalImage.classList.add('timeline-mode');
+        
+        // Show timeline
+        timelineContainer.classList.add('active');
+        
+        // Build timeline with all images
+        buildTimeline(startIndex);
+        
+        // Scroll to starting image
+        setTimeout(() => {
+            const startItem = timelineContainer.querySelector(`[data-index="${startIndex}"]`);
+            if (startItem) {
+                startItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 100);
+    }
+    
+    function showSingleImage(imageSrc) {
+        const timelineContainer = document.getElementById('modal-timeline');
+        const modalImage = document.getElementById('modalImage');
+        
+        // Hide timeline
+        timelineContainer.classList.remove('active');
+        
+        // Show single image
+        modalImage.classList.remove('timeline-mode');
+        modalImage.src = imageSrc;
+        
+        // Show navigation arrows on desktop
+        const leftArrow = document.getElementById('nav-left');
+        const rightArrow = document.getElementById('nav-right');
+        
+        if (leftArrow && rightArrow) {
+            leftArrow.style.display = 'block';
+            rightArrow.style.display = 'block';
+        }
+        
+        // Show/hide navigation arrows based on position
+        updateNavigationArrows();
+    }
+    
+    function buildTimeline(startIndex) {
+        const timelineContainer = document.getElementById('modal-timeline');
+        timelineContainer.innerHTML = '';
+        
+        modal.navigationImages.forEach((image, index) => {
+            const timelineItem = document.createElement('div');
+            timelineItem.className = 'timeline-item';
+            timelineItem.dataset.index = index;
+            
+            const img = document.createElement('img');
+            img.src = BASE_FULL + image.filename;
+            img.alt = `Photo ${index + 1}`;
+            img.loading = 'lazy';
+            
+            // Add zoom functionality for mobile timeline
+            img.addEventListener('click', (event) => {
+                if (isMobile) {
+                    handleTimelineImageZoom(img, event);
+                }
+            });
+            
+            timelineItem.appendChild(img);
+            timelineContainer.appendChild(timelineItem);
+        });
+        
+        // Add scroll listener to auto-unzoom images when scrolled away from
+        if (isMobile) {
+            timelineContainer.addEventListener('scroll', handleTimelineScroll);
+        }
+    }
+    
+    function handleTimelineScroll() {
+        const timelineContainer = document.getElementById('modal-timeline');
+        const zoomedImages = timelineContainer.querySelectorAll('img.zoomed');
+        
+        zoomedImages.forEach(img => {
+            const rect = img.getBoundingClientRect();
+            const containerRect = timelineContainer.getBoundingClientRect();
+            
+            // Calculate how much of the image is visible
+            const imageHeight = rect.height;
+            const visibleHeight = Math.min(rect.bottom, containerRect.bottom) - Math.max(rect.top, containerRect.top);
+            const visibilityPercentage = visibleHeight / imageHeight;
+            
+            // If image is less than 40% visible (60% scrolled away), unzoom it
+            if (visibilityPercentage < 0.4) {
+                img.classList.remove('zoomed');
+                img.style.cursor = 'zoom-in';
+                // Remove drag functionality and reset position
+                removeImageDrag(img);
+            }
+        });
+    }
+    
+    function handleTimelineImageZoom(img, event) {
+        if (img.classList.contains('zoomed')) {
+            // Zoom out
+            img.classList.remove('zoomed');
+            img.style.cursor = 'zoom-in';
+            // Remove drag functionality and reset transform
+            removeImageDrag(img);
+            img.style.transform = '';
+        } else {
+            // Zoom in
+            img.classList.add('zoomed');
+            img.style.cursor = 'zoom-out';
+            
+            // Calculate click position relative to the image for zoom origin
+            const rect = img.getBoundingClientRect();
+            const x = (event.clientX - rect.left) / rect.width;
+            const y = (event.clientY - rect.top) / rect.height;
+            
+            img.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+            
+            // Add drag functionality
+            addImageDrag(img);
+        }
+    }
+    
+    function addImageDrag(img) {
+        let isDragging = false;
+        let startX = 0;
+        let startY = 0;
+        let currentTranslateX = 0;
+        let currentTranslateY = 0;
+        
+        const handleTouchStart = (e) => {
+            isDragging = true;
+            startX = e.touches[0].clientX - currentTranslateX;
+            startY = e.touches[0].clientY - currentTranslateY;
+        };
+        
+        const handleTouchMove = (e) => {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            
+            const currentX = e.touches[0].clientX;
+            const currentY = e.touches[0].clientY;
+            
+            currentTranslateX = currentX - startX;
+            currentTranslateY = currentY - startY;
+            
+            // Apply the translation
+            img.style.transform = `scale(3) translate(${currentTranslateX}px, ${currentTranslateY}px)`;
+        };
+        
+        const handleTouchEnd = () => {
+            isDragging = false;
+        };
+        
+        // Store the handlers for cleanup
+        img.dragHandlers = { handleTouchStart, handleTouchMove, handleTouchEnd };
+        
+        // Add touch event listeners
+        img.addEventListener('touchstart', handleTouchStart, { passive: false });
+        img.addEventListener('touchmove', handleTouchMove, { passive: false });
+        img.addEventListener('touchend', handleTouchEnd, { passive: true });
+    }
+    
+    function removeImageDrag(img) {
+        if (img.dragHandlers) {
+            img.removeEventListener('touchstart', img.dragHandlers.handleTouchStart);
+            img.removeEventListener('touchmove', img.dragHandlers.handleTouchMove);
+            img.removeEventListener('touchend', img.dragHandlers.handleTouchEnd);
+            img.dragHandlers = null;
+        }
+        
+        // Reset any translation - only keep the scale(3) for zoomed state
+        if (img.classList.contains('zoomed')) {
+            img.style.transform = 'scale(3)';
+        } else {
+            img.style.transform = '';
+        }
     }
     
     function preloadNeighboringImages() {
@@ -336,16 +523,21 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const imagesToPreload = [];
         
-        // Preload previous image
-        if (modal.currentIndex > 0) {
-            const prevImage = modal.navigationImages[modal.currentIndex - 1];
-            imagesToPreload.push(BASE_FULL + prevImage.filename);
-        }
+        // Preload more images ahead and behind for smooth scrolling
+        const preloadRange = 3; // Load 3 images in each direction
         
-        // Preload next image
-        if (modal.currentIndex < modal.navigationImages.length - 1) {
-            const nextImage = modal.navigationImages[modal.currentIndex + 1];
-            imagesToPreload.push(BASE_FULL + nextImage.filename);
+        for (let i = 1; i <= preloadRange; i++) {
+            // Preload previous images
+            if (modal.currentIndex - i >= 0) {
+                const prevImage = modal.navigationImages[modal.currentIndex - i];
+                imagesToPreload.push(BASE_FULL + prevImage.filename);
+            }
+            
+            // Preload next images
+            if (modal.currentIndex + i < modal.navigationImages.length) {
+                const nextImage = modal.navigationImages[modal.currentIndex + i];
+                imagesToPreload.push(BASE_FULL + nextImage.filename);
+            }
         }
         
         // Create hidden image elements to preload
@@ -365,28 +557,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     
     function updateNavigationArrows() {
-        const leftArrow = document.getElementById('nav-left');
-        const rightArrow = document.getElementById('nav-right');
-        
-        if (modal.currentIndex > 0) {
-            leftArrow.style.display = 'block';
-        } else {
-            leftArrow.style.display = 'none';
-        }
-        
-        if (modal.currentIndex < modal.navigationImages.length - 1) {
-            rightArrow.style.display = 'block';
-        } else {
-            rightArrow.style.display = 'none';
+        // Only show arrows on desktop (single image mode)
+        if (!isMobile) {
+            const leftArrow = document.getElementById('nav-left');
+            const rightArrow = document.getElementById('nav-right');
+            
+            if (leftArrow && rightArrow) {
+                // Always show arrows on desktop, then hide based on position
+                leftArrow.style.display = 'block';
+                rightArrow.style.display = 'block';
+                
+                // Hide left arrow if at first image
+                if (modal.currentIndex <= 0) {
+                    leftArrow.style.display = 'none';
+                }
+                
+                // Hide right arrow if at last image
+                if (modal.currentIndex >= modal.navigationImages.length - 1) {
+                    rightArrow.style.display = 'none';
+                }
+            }
         }
     }
     
-    function navigateImage(direction, useAnimation = false) {
-        if (!modal.navigationImages || modal.currentIndex === undefined) return;
-        
-        // Prevent rapid navigation while loading
-        if (modal.isNavigating) return;
-        modal.isNavigating = true;
+    function navigateImage(direction) {
+        if (!modal.navigationImages || modal.currentIndex === undefined || isMobile) return;
         
         let newIndex;
         if (direction === 'left') {
@@ -397,111 +592,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         // Check bounds
         if (newIndex >= 0 && newIndex < modal.navigationImages.length) {
-            // Add animation class based on direction (only for swipe gestures)
-            if (useAnimation) {
-                if (direction === 'left') {
-                    modalImage.classList.add('slide-right'); // Going to previous (right swipe)
-                } else {
-                    modalImage.classList.add('slide-left'); // Going to next (left swipe)
-                }
-            }
-            
-            // Update image source
             modal.currentIndex = newIndex;
             const newImage = modal.navigationImages[newIndex];
             modalImage.src = BASE_FULL + newImage.filename;
             
-            if (useAnimation) {
-                // Wait for image to load before completing animation
-                modalImage.onload = () => {
-                    // Remove animation classes after animation completes
-                    setTimeout(() => {
-                        modalImage.classList.remove('slide-left', 'slide-right');
-                        modal.isNavigating = false; // Allow navigation again
-                    }, 300); // Match the CSS animation duration
-                    
-                    updateNavigationArrows();
-                    
-                    // Preload new neighboring images for the new position
-                    preloadNeighboringImages();
-                };
-                
-                // Fallback in case onload doesn't fire
-                setTimeout(() => {
-                    if (modal.isNavigating) {
-                        modal.isNavigating = false;
-                    }
-                }, 1000);
-            } else {
-                // No animation - immediate navigation
-                modalImage.onload = () => {
-                    modal.isNavigating = false;
-                    updateNavigationArrows();
-                    preloadNeighboringImages();
-                };
-                
-                // Fallback for immediate navigation
-                setTimeout(() => {
-                    if (modal.isNavigating) {
-                        modal.isNavigating = false;
-                    }
-                }, 500);
-            }
-        } else {
-            modal.isNavigating = false;
+            updateNavigationArrows();
+            preloadNeighboringImages();
         }
     }
     
-    function addSwipeListeners() {
-        let startX = 0;
-        let startY = 0;
-        let endX = 0;
-        let endY = 0;
-        
-        const handleTouchStart = (e) => {
-            startX = e.touches[0].clientX;
-            startY = e.touches[0].clientY;
-        };
-        
-        const handleTouchEnd = (e) => {
-            endX = e.changedTouches[0].clientX;
-            endY = e.changedTouches[0].clientY;
-            
-            // Calculate swipe distance and direction
-            const deltaX = endX - startX;
-            const deltaY = endY - startY;
-            
-            // Minimum swipe distance to trigger navigation
-            const minSwipeDistance = 50;
-            
-            // Check if it's a horizontal swipe (more horizontal than vertical)
-            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDistance) {
-                if (deltaX > 0) {
-                    // Swipe right - go to previous image
-                    navigateImage('left', true); // Use animation
-                } else {
-                    // Swipe left - go to next image
-                    navigateImage('right', true); // Use animation
-                }
-            }
-        };
-        
-        // Add touch event listeners to the modal
-        modal.addEventListener('touchstart', handleTouchStart, { passive: true });
-        modal.addEventListener('touchend', handleTouchEnd, { passive: true });
-        
-        // Store listeners for cleanup
-        modal.swipeListeners = { handleTouchStart, handleTouchEnd };
-    }
-    
-    function removeSwipeListeners() {
-        if (modal.swipeListeners) {
-            modal.removeEventListener('touchstart', modal.swipeListeners.handleTouchStart);
-            modal.removeEventListener('touchend', modal.swipeListeners.handleTouchEnd);
-            modal.swipeListeners = null;
-        }
-    }
-
     // Function to close the modal
     function closeModal() {
         modal.style.display = 'none';
@@ -512,7 +611,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.currentIndex = undefined;
         modal.currentFilter = undefined;
         modal.currentOrder = undefined;
-        modal.isNavigating = false;
         
         // Reset zoom state potentially needed if closed while zoomed
         isZoomed = false; 
@@ -520,32 +618,52 @@ document.addEventListener('DOMContentLoaded', () => {
         modalImage.style.transformOrigin = 'center center';
         modalImage.style.cursor = 'zoom-in';
         
-        // Remove swipe listeners
-        removeSwipeListeners();
-        cleanupPreloadedImages(); // Clean up preloaded images on close
+        // Reset timeline mode
+        const timelineContainer = document.getElementById('modal-timeline');
+        const modalImage = document.getElementById('modalImage');
+        
+        timelineContainer.classList.remove('active');
+        modalImage.classList.remove('timeline-mode');
+        
+        // Remove scroll listener and unzoom all timeline images
+        if (isMobile) {
+            timelineContainer.removeEventListener('scroll', handleTimelineScroll);
+            const zoomedImages = timelineContainer.querySelectorAll('img.zoomed');
+            zoomedImages.forEach(img => {
+                img.classList.remove('zoomed');
+                img.style.cursor = 'zoom-in';
+                // Remove drag functionality and reset position
+                removeImageDrag(img);
+            });
+        }
+        
+        // Clean up preloaded images
+        cleanupPreloadedImages();
     }
 
     // --- Event Listeners --- 
 
-    // Zoom functionality on modal image click
+    // Zoom functionality on modal image click (desktop only)
     modalImage.addEventListener('click', (event) => {
-        if (isZoomed) {
-            // Zoom Out
-            modalImage.style.transform = 'scale(1)';
-            modalImage.style.transformOrigin = 'center center';
-            modalImage.style.cursor = 'zoom-in';
-            isZoomed = false;
-        } else {
-            // Zoom In
-            const rect = modalImage.getBoundingClientRect();
-            // Calculate click position relative to the image (0 to 1)
-            const x = (event.clientX - rect.left) / rect.width;
-            const y = (event.clientY - rect.top) / rect.height;
+        if (!isMobile) { // Only allow zoom on desktop
+            if (isZoomed) {
+                // Zoom Out
+                modalImage.style.transform = 'scale(1)';
+                modalImage.style.transformOrigin = 'center center';
+                modalImage.style.cursor = 'zoom-in';
+                isZoomed = false;
+            } else {
+                // Zoom In
+                const rect = modalImage.getBoundingClientRect();
+                // Calculate click position relative to the image (0 to 1)
+                const x = (event.clientX - rect.left) / rect.width;
+                const y = (event.clientY - rect.top) / rect.height;
 
-            modalImage.style.transformOrigin = `${x * 100}% ${y * 100}%`;
-            modalImage.style.transform = 'scale(2)'; // Zoom factor (e.g., 2x)
-            modalImage.style.cursor = 'zoom-out';
-            isZoomed = true;
+                modalImage.style.transformOrigin = `${x * 100}% ${y * 100}%`;
+                modalImage.style.transform = 'scale(2)'; // Zoom factor (e.g., 2x)
+                modalImage.style.cursor = 'zoom-out';
+                isZoomed = true;
+            }
         }
     });
 
@@ -585,20 +703,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const rightArrow = document.getElementById('nav-right');
     
     if (leftArrow) {
-        leftArrow.addEventListener('click', () => navigateImage('left', false)); // No animation
+        leftArrow.addEventListener('click', () => navigateImage('left')); // No animation
     }
     
     if (rightArrow) {
-        rightArrow.addEventListener('click', () => navigateImage('right', false)); // No animation
+        rightArrow.addEventListener('click', () => navigateImage('right')); // No animation
     }
     
     // Enhanced keyboard navigation for modal
     document.addEventListener('keydown', (event) => {
         if (modal.style.display === 'flex') {
             if (event.key === 'ArrowLeft') {
-                navigateImage('left', true); // Use animation
+                navigateImage('left'); // No animation
             } else if (event.key === 'ArrowRight') {
-                navigateImage('right', true); // Use animation
+                navigateImage('right'); // No animation
             } else if (event.key === 'Escape') {
                 closeModal();
             }
