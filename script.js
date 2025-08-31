@@ -437,7 +437,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let touchStartTime = 0;
     let isPinching = false;
 
-    modal.addEventListener('touchstart', (event) => {
+    modalImage.addEventListener('touchstart', (event) => {
+        if (isPinching || isZoomed) return; // Disable swipe if pinching or zoomed
         if (event.touches.length > 1) {
             isPinching = true;
             return;
@@ -448,8 +449,8 @@ document.addEventListener('DOMContentLoaded', () => {
         touchStartTime = new Date().getTime();
     });
 
-    modal.addEventListener('touchend', (event) => {
-        if (isPinching) return;
+    modalImage.addEventListener('touchend', (event) => {
+        if (isPinching || isZoomed) return; // Disable swipe if pinching or zoomed
 
         const touchEndY = event.changedTouches[0].clientY;
         const touchEndX = event.changedTouches[0].clientX;
@@ -464,17 +465,62 @@ document.addEventListener('DOMContentLoaded', () => {
         // Minimum time threshold for swipe
         if (timeDiff < 100) return;
 
-        // Swipe up to close
-        if (deltaY < -100 && Math.abs(angle) > 45 && Math.abs(angle) < 135) {
+        // Swipe up or down to close
+        if (Math.abs(deltaY) > 100 && (Math.abs(angle) > 45 && Math.abs(angle) < 135)) {
             closeModal();
         }
 
-        // Swipe left or right to navigate
-        if (Math.abs(deltaX) > 100 && Math.abs(angle) < 45) {
-            const direction = deltaX < 0 ? 'right' : 'left';
-            navigateImages(direction);
+        // Swipe left-to-right → go left
+        if (deltaX > 100 && (Math.abs(angle) < 45 || Math.abs(angle) > 135)) {
+            navigateImages('left');
+        }
+
+        // Swipe right-to-left → go right
+        if (deltaX < -100 && (Math.abs(angle) < 45 || Math.abs(angle) > 135)) {
+            navigateImages('right');
         }
     });
+
+    let lastTouchX = 0;
+    let lastTouchY = 0;
+
+    modalImage.addEventListener('touchstart', (event) => {
+        if (isZoomed && event.touches.length === 1) {
+            lastTouchX = event.touches[0].clientX;
+            lastTouchY = event.touches[0].clientY;
+        }
+    });
+
+    modalImage.addEventListener('touchmove', (event) => {
+        if (isZoomed && event.touches.length === 1) {
+            event.preventDefault(); // Prevent default behavior
+            const touchX = event.touches[0].clientX;
+            const touchY = event.touches[0].clientY;
+
+            const deltaX = (touchX - lastTouchX) * 0.5; // Maintain reduced sensitivity
+            const deltaY = (touchY - lastTouchY) * 0.5; // Maintain reduced sensitivity
+
+            const currentTransform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
+            const currentTranslate = currentTransform ? currentTransform[1].split(',').map(parseFloat) : [0, 0];
+
+            const newTranslateX = currentTranslate[0] + deltaX;
+            const newTranslateY = currentTranslate[1] + deltaY;
+
+            // Calculate tighter boundaries
+            const rect = modalImage.getBoundingClientRect();
+            const maxTranslateX = (rect.width * (2 - 1)) / 4; // Quarter of the zoomed width
+            const maxTranslateY = (rect.height * (2 - 1)) / 4; // Quarter of the zoomed height
+
+            // Apply tighter boundaries
+            const boundedTranslateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX));
+            const boundedTranslateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY));
+
+            modalImage.style.transform = `scale(2) translate(${boundedTranslateX}px, ${boundedTranslateY}px)`;
+
+            lastTouchX = touchX;
+            lastTouchY = touchY;
+        }
+    }, { passive: false });
 
     // Function to navigate images
     function navigateImages(direction) {
