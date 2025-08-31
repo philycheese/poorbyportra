@@ -449,7 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
         touchStartTime = new Date().getTime();
     });
 
-    modalImage.addEventListener('touchend', (event) => {
+    modal.addEventListener('touchend', (event) => {
         if (isPinching || isZoomed) return; // Disable swipe if pinching or zoomed
 
         const touchEndY = event.changedTouches[0].clientY;
