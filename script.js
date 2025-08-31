@@ -428,6 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Touch Event Listeners for Mobile ---
     let touchStartY = 0;
     let touchStartX = 0;
+    let touchStartTime = 0;
     let isPinching = false;
 
     modal.addEventListener('touchstart', (event) => {
@@ -438,6 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
         isPinching = false;
         touchStartY = event.touches[0].clientY;
         touchStartX = event.touches[0].clientX;
+        touchStartTime = new Date().getTime();
     });
 
     modal.addEventListener('touchend', (event) => {
@@ -445,15 +447,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const touchEndY = event.changedTouches[0].clientY;
         const touchEndX = event.changedTouches[0].clientX;
+        const touchEndTime = new Date().getTime();
+        const timeDiff = touchEndTime - touchStartTime;
+
+        // Calculate distances
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+        const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
+
+        // Minimum time threshold for swipe
+        if (timeDiff < 100) return;
 
         // Swipe up to close
-        if (touchStartY - touchEndY > 100) { // Increased threshold
+        if (deltaY < -100 && Math.abs(angle) > 45 && Math.abs(angle) < 135) {
             closeModal();
         }
 
         // Swipe left or right to navigate
-        if (Math.abs(touchStartX - touchEndX) > 100) { // Increased threshold
-            const direction = touchStartX > touchEndX ? 'right' : 'left';
+        if (Math.abs(deltaX) > 100 && Math.abs(angle) < 45) {
+            const direction = deltaX < 0 ? 'right' : 'left';
             navigateImages(direction);
         }
     });
