@@ -184,68 +184,193 @@ nav button.active {
 }
 */
 
-/* Modal Styles */
+/* Modal */
 .modal {
-    display: none; /* Hidden by default */
+    display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    /* background-color: rgba(0, 0, 0, 0.85); */ /* Old dark overlay */
-    background-color: #ffffff; /* CHANGED to white */
-    align-items: center;
+    background-color: #ffffff; /* Completely white background */
     justify-content: center;
-}
-
-.modal.show {
-    display: flex; /* Show the modal */
-    /* opacity: 1; */ /* REMOVED - No longer needed for transition */
+    align-items: center;
 }
 
 .modal-content {
-    display: block;
-    margin: auto;
     max-width: 90%;
-    max-height: 90vh;
-    /* Add transition for zoom effect */
+    max-height: 90%;
+    object-fit: contain;
+    cursor: zoom-in;
     transition: transform 0.3s ease;
-    cursor: zoom-in; /* Indicate zoom is possible */
+    /* Ensure image has margins so arrows don't overlap */
+    margin: 0 60px;
 }
 
-/* REMOVE Modal Animation */
-/* 
-@keyframes fadeInScale {
-    from {
-        transform: scale(0.9);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-*/
-
-.close-button {
+.close {
     position: absolute;
-    top: 20px;
+    top: 15px;
     right: 35px;
-    /* color: #f1f1f1; */ /* Old light color */
-    color: #333; /* CHANGED to dark grey */
+    color: #333; /* Dark color for white background */
     font-size: 40px;
     font-weight: bold;
     cursor: pointer;
-    transition: color 0.3s ease;
+    z-index: 1002;
 }
 
-.close-button:hover,
-.close-button:focus {
-    /* color: #bbb; */ /* Old light hover color */
-    color: #666; /* CHANGED to a medium grey for hover */
+.close:hover,
+.close:focus {
+    color: #666;
     text-decoration: none;
+}
+
+/* Modal Navigation Arrows */
+.nav-arrow {
+    position: absolute;
+    background: none; /* No background */
+    color: #999; /* Light grey color */
+    border: none; /* No border */
+    font-size: 2.5rem; /* Larger font size for visibility */
+    padding: 0; /* No padding */
+    cursor: pointer;
+    transition: color 0.2s ease; /* Only color transition */
+    z-index: 1001;
+    /* Simple text styling */
+    font-weight: 300; /* Lighter font weight */
+    text-decoration: none;
+}
+
+.nav-arrow:hover {
+    color: #333; /* Darker grey on hover */
+}
+
+.nav-left {
+    left: 20px; /* Position further from the edge */
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.nav-right {
+    right: 20px; /* Position further from the edge */
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Hide arrows by default, they'll be shown/hidden by JavaScript */
+.nav-arrow {
+    display: none;
+}
+
+/* Modal Timeline Container */
+.modal-timeline {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: white;
+    display: none;
+    padding: 5px 0;
+    z-index: 1000;
+}
+
+.modal-timeline.active {
+    display: block;
+}
+
+/* Timeline Image Items */
+.timeline-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 15px;
+    box-sizing: border-box;
+    margin-bottom: 40px;
+}
+
+.timeline-item:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-item img {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    display: block;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    cursor: zoom-in;
+    transition: transform 0.3s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.timeline-item img.zoomed {
+    transform: scale(3);
+    cursor: zoom-out;
+    z-index: 9999;
+    position: relative;
+    border: 30px solid white;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Hide regular modal content when timeline is active */
+.modal-content.timeline-mode {
+    display: none;
+}
+
+/* Photo transition animations (for desktop) */
+.modal-content {
+    transition: transform 0.3s ease-out;
+    animation: fadeIn 0.2s ease-out;
+    /* Prevent rendering issues during transitions */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-style: preserve-3d;
+    -webkit-transform-style: preserve-3d;
+}
+
+@keyframes fadeIn {
+    0% {
+        opacity: 0;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .nav-arrow {
+        font-size: 2rem; /* Slightly smaller on mobile */
+        /* Position arrows below the image on mobile */
+        top: auto;
+        bottom: 20px;
+        transform: none; /* Reset transform for new positioning */
+    }
+    
+    .nav-left {
+        left: 50%;
+        transform: translateX(-60px); /* Center and offset left */
+    }
+    
+    .nav-right {
+        right: 50%;
+        transform: translateX(60px); /* Center and offset right */
+    }
+    
+    .modal-content {
+        margin: 0 20px 80px 20px; /* Add bottom margin for arrows */
+    }
 }
 
 /* Responsive Adjustments */
@@ -302,9 +427,10 @@ nav button.active {
         max-width: 95%;
         max-height: 85vh;
     }
-    .close-button {
-        font-size: 30px;
-        top: 15px;
-        right: 25px;
+} 
+
+@media (max-width: 768px) {
+    .modal-content {
+        margin: 0 50px;
     }
 } 
