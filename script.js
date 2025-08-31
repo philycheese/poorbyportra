@@ -428,23 +428,31 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Touch Event Listeners for Mobile ---
     let touchStartY = 0;
     let touchStartX = 0;
+    let isPinching = false;
 
     modal.addEventListener('touchstart', (event) => {
+        if (event.touches.length > 1) {
+            isPinching = true;
+            return;
+        }
+        isPinching = false;
         touchStartY = event.touches[0].clientY;
         touchStartX = event.touches[0].clientX;
     });
 
     modal.addEventListener('touchend', (event) => {
+        if (isPinching) return;
+
         const touchEndY = event.changedTouches[0].clientY;
         const touchEndX = event.changedTouches[0].clientX;
 
         // Swipe up to close
-        if (touchStartY - touchEndY > 50) {
+        if (touchStartY - touchEndY > 100) { // Increased threshold
             closeModal();
         }
 
         // Swipe left or right to navigate
-        if (Math.abs(touchStartX - touchEndX) > 50) {
+        if (Math.abs(touchStartX - touchEndX) > 100) { // Increased threshold
             const direction = touchStartX > touchEndX ? 'right' : 'left';
             navigateImages(direction);
         }
