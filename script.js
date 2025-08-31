@@ -17,6 +17,16 @@ document.addEventListener('DOMContentLoaded', () => {
     let isReversed = true; // Track if sorting is reversed - default to true for Z-A
     let currentFilter = 'landscape'; // Track current filter
 
+    // Variables to track current image index and filtered images
+    let currentImageIndex = 0;
+    let filteredImages = [];
+
+    // Update filteredImages based on current filter
+    function updateFilteredImages() {
+        filteredImages = images.filter(img =>
+            currentFilter === 'all' || img.categories.includes(currentFilter)
+        );
+    }
 
     const images = [
         { filename: 'export-001.jpg', categories: ['all'] },
@@ -311,7 +321,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Function to open the modal (Accepts full image source)
+    // Modify openModal to set currentImageIndex
     function openModal(srcFull) {
         isZoomed = false; // Reset zoom state on open
         modalImage.style.transform = 'scale(1)'; // Reset transform
@@ -320,6 +330,9 @@ document.addEventListener('DOMContentLoaded', () => {
         modalImage.src = srcFull; // Use the full image source passed in
         modal.classList.add('show');
         document.body.style.overflow = 'hidden'; // Prevent background scrolling
+
+        // Set currentImageIndex based on the image being opened
+        currentImageIndex = filteredImages.findIndex(img => BASE_FULL + img.filename === srcFull);
     }
 
     // Function to close the modal
@@ -332,8 +345,6 @@ document.addEventListener('DOMContentLoaded', () => {
         modalImage.style.transformOrigin = 'center center';
         modalImage.style.cursor = 'zoom-in';
     }
-
-    // --- Event Listeners --- 
 
     // Zoom functionality on modal image click
     modalImage.addEventListener('click', (event) => {
@@ -357,6 +368,60 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // Add touch event listeners for swipe up to close modal
+    let touchStartY = 0;
+    let touchEndY = 0;
+
+    modalImage.addEventListener('touchstart', (event) => {
+        touchStartY = event.changedTouches[0].screenY;
+    });
+
+    modalImage.addEventListener('touchend', (event) => {
+        touchEndY = event.changedTouches[0].screenY;
+        handleSwipeGesture();
+    });
+
+    function handleSwipeGesture() {
+        if (touchStartY - touchEndY > 50) { // Swipe up threshold
+            closeModal();
+        }
+    }
+
+    // Add touch event listeners for swipe left/right to navigate images
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    modalImage.addEventListener('touchstart', (event) => {
+        touchStartX = event.changedTouches[0].screenX;
+    });
+
+    modalImage.addEventListener('touchend', (event) => {
+        touchEndX = event.changedTouches[0].screenX;
+        handleSwipeNavigation();
+    });
+
+    function handleSwipeNavigation() {
+        if (touchStartX - touchEndX > 50) { // Swipe left
+            navigateToPreviousImage();
+        } else if (touchEndX - touchStartX > 50) { // Swipe right
+            navigateToNextImage();
+        }
+    }
+
+    function navigateToNextImage() {
+        if (currentImageIndex < filteredImages.length - 1) {
+            currentImageIndex++;
+            modalImage.src = BASE_FULL + filteredImages[currentImageIndex].filename;
+        }
+    }
+
+    function navigateToPreviousImage() {
+        if (currentImageIndex > 0) {
+            currentImageIndex--;
+            modalImage.src = BASE_FULL + filteredImages[currentImageIndex].filename;
+        }
+    }
+
     // Filter button clicks
     filterButtons.forEach(button => {
         button.addEventListener('click', () => {
@@ -364,6 +429,7 @@ document.addEventListener('DOMContentLoaded', () => {
             button.classList.add('active');
             const filterValue = button.getAttribute('data-filter');
             currentFilter = filterValue; // Update current filter
+            updateFilteredImages(); // Update filtered images based on new filter
             displayImages(filterValue, isReversed ? 'alphabetical' : 'default'); // Pass current filter and current sort state
         });
     });
@@ -424,5 +490,13 @@ document.addEventListener('DOMContentLoaded', () => {
         sortToggle.textContent = '↓';
         sortToggle.classList.add('active');
     }
+
+    // Update filtered images on initial load and whenever filter changes
+    updateFilteredImages();
+    filterButtons.forEach(button => {
+        button.addEventListener('click', () => {
+            updateFilteredImages();
+        });
+    });
 
 }); 
