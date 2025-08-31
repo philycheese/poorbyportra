@@ -425,4 +425,47 @@ document.addEventListener('DOMContentLoaded', () => {
         sortToggle.classList.add('active');
     }
 
+    // --- Touch Event Listeners for Mobile ---
+    let touchStartY = 0;
+    let touchStartX = 0;
+
+    modal.addEventListener('touchstart', (event) => {
+        touchStartY = event.touches[0].clientY;
+        touchStartX = event.touches[0].clientX;
+    });
+
+    modal.addEventListener('touchend', (event) => {
+        const touchEndY = event.changedTouches[0].clientY;
+        const touchEndX = event.changedTouches[0].clientX;
+
+        // Swipe up to close
+        if (touchStartY - touchEndY > 50) {
+            closeModal();
+        }
+
+        // Swipe left or right to navigate
+        if (Math.abs(touchStartX - touchEndX) > 50) {
+            const direction = touchStartX > touchEndX ? 'right' : 'left';
+            navigateImages(direction);
+        }
+    });
+
+    // Function to navigate images
+    function navigateImages(direction) {
+        const currentSrc = modalImage.src.split('/').pop();
+        const filteredImages = images.filter(img => currentFilter === 'all' || img.categories.includes(currentFilter));
+        const sortedImages = sortImages(filteredImages, isReversed ? 'alphabetical' : 'default');
+        const currentIndex = sortedImages.findIndex(img => img.filename === currentSrc);
+        let newIndex;
+
+        if (direction === 'right') {
+            newIndex = (currentIndex + 1) % sortedImages.length;
+        } else {
+            newIndex = (currentIndex - 1 + sortedImages.length) % sortedImages.length;
+        }
+
+        const newImage = sortedImages[newIndex];
+        openModal(BASE_FULL + newImage.filename);
+    }
+
 }); 
