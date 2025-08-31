@@ -335,7 +335,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Event Listeners --- 
 
-    // Zoom functionality on modal image click
+    // --- Custom Zoom Mechanism ---
+    modalImage.addEventListener('touchmove', (event) => {
+        if (isZoomed) {
+            event.preventDefault(); // Prevent default pinch-to-zoom
+        }
+    }, { passive: false });
+
     modalImage.addEventListener('click', (event) => {
         if (isZoomed) {
             // Zoom Out
