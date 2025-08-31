@@ -466,17 +466,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (timeDiff < 100) return;
 
         // Swipe up or down to close
-        if (Math.abs(deltaY) > 100 && (Math.abs(angle) > 45 && Math.abs(angle) < 135)) {
+        if (Math.abs(deltaY) > 80 && (Math.abs(angle) > 45 && Math.abs(angle) < 135)) { // Increased sensitivity
             closeModal();
         }
 
         // Swipe left-to-right → go left
-        if (deltaX > 100 && (Math.abs(angle) < 45 || Math.abs(angle) > 135)) {
+        if (deltaX > 80 && (Math.abs(angle) < 45 || Math.abs(angle) > 135)) { // Increased sensitivity
             navigateImages('left');
         }
 
         // Swipe right-to-left → go right
-        if (deltaX < -100 && (Math.abs(angle) < 45 || Math.abs(angle) > 135)) {
+        if (deltaX < -80 && (Math.abs(angle) < 45 || Math.abs(angle) > 135)) { // Increased sensitivity
             navigateImages('right');
         }
     });
@@ -497,8 +497,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const touchX = event.touches[0].clientX;
             const touchY = event.touches[0].clientY;
 
-            const deltaX = (touchX - lastTouchX) * 0.5; // Maintain reduced sensitivity
-            const deltaY = (touchY - lastTouchY) * 0.5; // Maintain reduced sensitivity
+            const deltaX = (touchX - lastTouchX) * 0.6; // Slightly increased sensitivity
+            const deltaY = (touchY - lastTouchY) * 0.6; // Slightly increased sensitivity
 
             const currentTransform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
             const currentTranslate = currentTransform ? currentTransform[1].split(',').map(parseFloat) : [0, 0];
