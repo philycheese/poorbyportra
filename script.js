@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const introToggle = document.getElementById('intro-toggle'); // Get the toggle element
     const introTextBox = document.getElementById('intro-text-box'); // Get the text box element
     const sortToggle = document.getElementById('sort-toggle'); // Get the sort toggle button
+    const spinner = document.getElementById('spinner');
 
     const BASE_FULL = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/v1753994362/';
     const BASE_THUMB = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_1000,q_auto,f_auto/v1753994362/';
@@ -539,19 +540,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const newImage = sortedImages[newIndex];
-        const lowQualitySrc = BASE_LOW_QUALITY + newImage.filename;
         const highQualitySrc = BASE_HIGH_QUALITY + newImage.filename;
 
-        // Load low-quality image first
-        modalImage.src = lowQualitySrc;
+        // Show spinner
+        spinner.style.display = 'block';
 
-        // Preload high-quality image and replace
-        const img = new Image();
-        img.src = highQualitySrc;
-        img.onload = () => {
-            if (modalImage.src === lowQualitySrc) { // Ensure the image hasn't changed
-                modalImage.src = highQualitySrc;
-            }
+        // Load high-quality image
+        modalImage.src = highQualitySrc;
+
+        // Hide spinner once loaded
+        modalImage.onload = () => {
+            spinner.style.display = 'none';
         };
     }
 
