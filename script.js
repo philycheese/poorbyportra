@@ -549,7 +549,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = new Image();
         img.src = highQualitySrc;
         img.onload = () => {
-            modalImage.src = highQualitySrc;
+            if (modalImage.src === lowQualitySrc) { // Ensure the image hasn't changed
+                modalImage.src = highQualitySrc;
+            }
         };
     }
 
