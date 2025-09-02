@@ -452,52 +452,8 @@ document.addEventListener('DOMContentLoaded', () => {
         touchStartTime = new Date().getTime();
     });
 
-    function pinchEnd(event) {
-        if (scaling) {
-            scaling = false;
-            isPinchedToZoom = false; // Reset pinch state
-        }
-    }
-
-    modal.addEventListener('touchend', (event) => {
-        if (isPinchedToZoom) {
-            isPinchedToZoom = false; // Reset pinch state after touch ends
-            return;
-        }
-
-        if (isZoomed) return; // Disable swipe if zoomed
-
-        const touchEndY = event.changedTouches[0].clientY;
-        const touchEndX = event.changedTouches[0].clientX;
-        const touchEndTime = new Date().getTime();
-        const timeDiff = touchEndTime - touchStartTime;
-
-        // Calculate distances
-        const deltaX = touchEndX - touchStartX;
-        const deltaY = touchEndY - touchStartY;
-        const angle = Math.atan2(deltaY, deltaX) * 180 / Math.PI;
-
-        // Minimum time threshold for swipe
-        if (timeDiff < 100) return;
-
-        // Swipe up to close
-        if (deltaY < -80 && Math.abs(angle) > 45 && Math.abs(angle) < 135) {
-            closeModal();
-        }
-
-        // Swipe left-to-right → go right
-        if (deltaX > 80 && Math.abs(angle) < 45) {
-            navigateImages('right');
-        }
-
-        // Swipe right-to-left → go left
-        if (deltaX < -80 && Math.abs(angle) < 45) {
-            navigateImages('left');
-        }
-    });
-
-    let lastTouchX = 0;
-    let lastTouchY = 0;
+    let scaling = false;
+    let isPinchedToZoom = false;
 
     modalImage.addEventListener('touchstart', (event) => {
         if (isZoomed && event.touches.length === 1) {
