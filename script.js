@@ -554,4 +554,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
+    // Prevent gesture events that could trigger zoom
+    document.addEventListener('gesturestart', function (e) {
+        e.preventDefault();
+    });
+
 }); 
