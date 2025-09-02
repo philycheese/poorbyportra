@@ -13,6 +13,7 @@ body {
     background-color: #f8f8f8; /* Slightly off-white */
     color: #333; /* Dark grey */
     line-height: 1.6;
+    touch-action: manipulation;
 }
 
 /* Header and Navigation */
