@@ -452,8 +452,20 @@ document.addEventListener('DOMContentLoaded', () => {
         touchStartTime = new Date().getTime();
     });
 
+    function pinchEnd(event) {
+        if (scaling) {
+            scaling = false;
+            isPinchedToZoom = false; // Reset pinch state
+        }
+    }
+
     modal.addEventListener('touchend', (event) => {
-        if (isPinching || isZoomed) return; // Disable swipe if pinching or zoomed
+        if (isPinchedToZoom) {
+            isPinchedToZoom = false; // Reset pinch state after touch ends
+            return;
+        }
+
+        if (isZoomed) return; // Disable swipe if zoomed
 
         const touchEndY = event.changedTouches[0].clientY;
         const touchEndX = event.changedTouches[0].clientX;
@@ -468,19 +480,19 @@ document.addEventListener('DOMContentLoaded', () => {
         // Minimum time threshold for swipe
         if (timeDiff < 100) return;
 
-        // Swipe up or down to close
-        if (Math.abs(deltaY) > 80 && (Math.abs(angle) > 45 && Math.abs(angle) < 135)) { // Increased sensitivity
+        // Swipe up to close
+        if (deltaY < -80 && Math.abs(angle) > 45 && Math.abs(angle) < 135) {
             closeModal();
         }
 
-        // Swipe left-to-right → go left
-        if (deltaX > 80 && (Math.abs(angle) < 45 || Math.abs(angle) > 135)) { // Increased sensitivity
-            navigateImages('left');
+        // Swipe left-to-right → go right
+        if (deltaX > 80 && Math.abs(angle) < 45) {
+            navigateImages('right');
         }
 
-        // Swipe right-to-left → go right
-        if (deltaX < -80 && (Math.abs(angle) < 45 || Math.abs(angle) > 135)) { // Increased sensitivity
-            navigateImages('right');
+        // Swipe right-to-left → go left
+        if (deltaX < -80 && Math.abs(angle) < 45) {
+            navigateImages('left');
         }
     });
 
