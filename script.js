@@ -11,6 +11,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const BASE_FULL = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/v1753994362/';
     const BASE_THUMB = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_1000,q_auto,f_auto/v1753994362/';
+    const BASE_LOW_QUALITY = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_200,q_auto,f_auto/v1753994362/';
+    const BASE_HIGH_QUALITY = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_1000,q_auto,f_auto/v1753994362/';
 
     let isZoomed = false; // Add state variable for zoom
     let originalTitle = 'POORBYPORTRA';
@@ -537,7 +539,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const newImage = sortedImages[newIndex];
-        openModal(BASE_FULL + newImage.filename);
+        const lowQualitySrc = BASE_LOW_QUALITY + newImage.filename;
+        const highQualitySrc = BASE_HIGH_QUALITY + newImage.filename;
+
+        // Load low-quality image first
+        modalImage.src = lowQualitySrc;
+
+        // Preload high-quality image and replace
+        const img = new Image();
+        img.src = highQualitySrc;
+        img.onload = () => {
+            modalImage.src = highQualitySrc;
+        };
     }
 
 }); 
