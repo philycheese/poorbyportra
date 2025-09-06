@@ -292,7 +292,24 @@ document.addEventListener('DOMContentLoaded', () => {
         { filename: 'export-236.jpg', categories: ['all'] },
         { filename: 'export-237.jpg', categories: ['all'] },
         { filename: 'export-238.jpg', categories: ['all'] },
-        { filename: 'export-239.jpg', categories: ['all'] }
+        { filename: 'export-239.jpg', categories: ['all'] },
+        { filename: 'export-240.jpg', categories: ['all'] },
+        { filename: 'export-241.jpg', categories: ['all'] },
+        { filename: 'export-242.jpg', categories: ['all'] },
+        { filename: 'export-243.jpg', categories: ['all'] },
+        { filename: 'export-244.jpg', categories: ['all'] },
+        { filename: 'export-245.jpg', categories: ['landscape'] },
+        { filename: 'export-246.jpg', categories: ['all'] },
+        { filename: 'export-247.jpg', categories: ['landscape'] },
+        { filename: 'export-248.jpg', categories: ['all'] },
+        { filename: 'export-249.jpg', categories: ['landscape'] },
+        { filename: 'export-250.jpg', categories: ['all'] },
+        { filename: 'export-251.jpg', categories: ['all'] },
+        { filename: 'export-252.jpg', categories: ['all'] },
+        { filename: 'export-253.jpg', categories: ['all'] },
+        { filename: 'export-254.jpg', categories: ['all'] },
+        { filename: 'export-255.jpg', categories: ['all'] },
+        { filename: 'export-256.jpg', categories: ['all'] }
     ];
 
     // --- Functions --- 
