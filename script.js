@@ -309,9 +309,15 @@ document.addEventListener('DOMContentLoaded', () => {
         { filename: 'export-253.jpg', categories: ['all'] },
         { filename: 'export-254.jpg', categories: ['all'] },
         { filename: 'export-255.jpg', categories: ['landscape'] },
-        { filename: 'export-256.jpg', categories: ['all'] }
+        { filename: 'export-256.jpg', categories: ['all'] },
+        { filename: 'export-257.jpg', categories: ['all'] },
+        { filename: 'export-258.jpg', categories: ['all'] },
+        { filename: 'export-259.jpg', categories: ['all'] },
+        { filename: 'export-260.jpg', categories: ['all'] },
+        { filename: 'export-261.jpg', categories: ['all'] },
+        { filename: 'export-262.jpg', categories: ['all'] },
+        { filename: 'export-263.jpg', categories: ['all'] }
     ];
-
     // --- Functions --- 
 
     // Function to sort images based on current order
