@@ -329,7 +329,6 @@ document.addEventListener('DOMContentLoaded', () => {
         { filename: 'export-273.jpg', categories: ['all'] },
         { filename: 'export-274.jpg', categories: ['all'] },
         { filename: 'export-275.jpg', categories: ['all'] },
-        { filename: 'export-276.jpg', categories: ['all'] },
         { filename: 'export-277.jpg', categories: ['all'] },
         { filename: 'export-278.jpg', categories: ['all'] },
         { filename: 'export-279.jpg', categories: ['all'] },
