@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let isZoomed = false; // Add state variable for zoom
     let originalTitle = 'POORBYPORTRA';
     let isReversed = true; // Track if sorting is reversed - default to true for Z-A
-    let currentFilter = 'landscape'; // Track current filter
+    let currentFilter = 'all'; // Track current filter
 
 
     const images = [
@@ -333,6 +333,13 @@ document.addEventListener('DOMContentLoaded', () => {
         { filename: 'export-278.jpg', categories: ['all'] },
         { filename: 'export-279.jpg', categories: ['all'] },
         { filename: 'export-280.jpg', categories: ['all'] },
+        { filename: 'export-282.jpg', categories: ['all'] },
+        { filename: 'export-283.jpg', categories: ['all'] },
+        { filename: 'export-284.jpg', categories: ['all'] },
+        { filename: 'export-285.jpg', categories: ['all'] },
+        { filename: 'export-286.jpg', categories: ['all'] },
+        { filename: 'export-287.jpg', categories: ['all'] },
+        { filename: 'export-288.jpg', categories: ['all'] },
     ];
     // --- Functions --- 
 
@@ -498,7 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // loadAllImages(); // OLD METHOD
     // applyFilter(); // OLD METHOD
     // displayImages(); // Old initial call (defaulted to 'all')
-    displayImages('landscape', 'alphabetical'); // New initial call, matches the default active button and reverse alphabetical order
+    displayImages('all', 'alphabetical'); // New initial call, matches the default active button and reverse alphabetical order
     
     // Set initial button text to show down arrow (Z-A)
     if (sortToggle) {
