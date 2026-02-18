@@ -413,6 +413,12 @@ document.addEventListener('DOMContentLoaded', () => {
         { filename: 'export-348.jpg', categories: ['all'] },
         { filename: 'export-349.jpg', categories: ['all'] },
         { filename: 'export-350.jpg', categories: ['all'] },
+        { filename: 'export-351.jpg', categories: ['all'] },
+        { filename: 'export-352.jpg', categories: ['all'] },
+        { filename: 'export-353.jpg', categories: ['all'] },
+        { filename: 'export-354.jpg', categories: ['all'] },
+        { filename: 'export-355.jpg', categories: ['all'] },
+        { filename: 'export-356.jpg', categories: ['all'] }
     ];
     // --- Functions --- 
 
