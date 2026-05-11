@@ -1,330 +1,298 @@
-/* Import Font */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap');
+/* ─── Gallery: mobile-first, are.na-inspired ────────────────────────── */
 
-/* Reset and Base Styles */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+:root {
+    --color-bg: #ffffff;
+    --color-text: #333333;
+    --color-muted: #696969;
+    --color-line: #ececec;
+    --color-btn-bg: #f7f7f7;
+    --color-btn-bg-hover: #efefef;
+    --color-block-bg: #f3f3f3;
+    --color-link-hover: #000000;
+
+    --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --font-size-base: 13px;
+    --font-size-title: 24px;
+
+    --page-pad-x: 18px;
+    --page-pad-y: 22px;
+    --grid-gap: 6px;
+
+    --radius: 3px;
 }
 
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: #f8f8f8; /* Slightly off-white */
-    color: #333; /* Dark grey */
-    line-height: 1.6;
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-sans);
+    font-size: var(--font-size-base);
+    line-height: 1.4;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv11", "ss01";
     touch-action: manipulation;
 }
 
-/* Header and Navigation */
-header {
-    display: flex; 
-    justify-content: space-between; 
-    align-items: center; 
-    padding: 20px 30px; 
-    border-bottom: 1px solid #eee;
-    margin-bottom: 15px;
-}
+a { color: inherit; text-decoration: none; }
+a:hover { color: var(--color-link-hover); }
 
-.site-title {
-    font-weight: 500; 
-    font-size: 1.2rem;
-    text-transform: uppercase; 
-    letter-spacing: 0.5px;
-}
+ul { list-style: none; }
 
-nav ul {
-    list-style: none;
-    text-align: right;
-}
-
-nav ul li {
-    display: inline-block;
-    margin: 0 15px;
-}
-
-nav button {
-    font-family: inherit;
-    font-size: 1rem;
+button {
+    font: inherit;
     background: none;
     border: none;
+    padding: 0;
     cursor: pointer;
-    color: #555;
-    padding: 5px 0;
-    border-bottom: 2px solid transparent;
-    transition: color 0.3s ease, border-bottom-color 0.3s ease;
+    color: inherit;
 }
 
-nav button:hover,
-nav button.active {
-    color: #000;
-    border-bottom-color: #000;
+/* ─── Page layout (mobile-first) ────────────────────────────────────── */
+
+.page {
+    padding: var(--page-pad-y) var(--page-pad-x) calc(var(--page-pad-y) * 2);
 }
 
-/* Sort Button styled for intro area */
-.sort-btn {
-    font-family: inherit;
-    font-size: 0.85rem;
-    background: none;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    padding: 1px 15px;
-    margin-top:10px;
-    margin-right: 7px;
+.page-header {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+
+/* breadcrumb title */
+.breadcrumb {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: var(--font-size-title);
+    font-weight: 400;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+}
+
+.breadcrumb h1 {
+    font-size: inherit;
+    font-weight: 600;
+    line-height: inherit;
+    color: var(--color-text);
+}
+
+.breadcrumb .crumb { display: inline-flex; align-items: center; }
+
+.breadcrumb .crumb + .crumb::before {
+    content: "/";
+    margin: 0 0.5ch;
+    color: var(--color-text);
+    font-weight: 400;
+}
+
+.breadcrumb a { color: var(--color-text); }
+.breadcrumb .crumb-active { font-weight: 700; }
+
+.header-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+/* ─── Chip buttons ──────────────────────────────────────────────────── */
+
+.action-btn,
+.filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 11px;
+    font-size: var(--font-size-base);
+    color: var(--color-text);
+    background: var(--color-btn-bg);
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    transition: background-color 0.12s ease, color 0.12s ease;
     cursor: pointer;
-    transition: all 0.2s ease;
-    color: #555;
-    min-width: 32px;
-    vertical-align: middle;
-    float: right; /* Position sort button on the right */
+    white-space: nowrap;
 }
 
-.sort-btn:hover {
-    background-color: #e0e0e0;
-    border-color: #999;
+.action-btn:hover,
+.filter-btn:hover { background: var(--color-btn-bg-hover); }
+
+.filter-btn.active {
+    background: var(--color-text);
+    color: var(--color-bg);
 }
 
-.sort-btn.active {
-    background-color: #666;
-    color: white;
-    border-color: #666;
-}
+/* ─── Image grid ────────────────────────────────────────────────────── */
 
-/* Intro Text Toggle and Box */
-.intro-container {
-    margin-bottom: 20px; /* Space between intro and grid */
-    overflow: hidden; /* Contain elements during transition */
-    /* Add centering to match the grid */
-    max-width: 1400px; /* Match grid max-width */
-    margin-left: auto;
-    margin-right: auto;
-}
-
-.intro-toggle {
-    display: inline-block;
-    cursor: pointer;
-    font-size: 1.1rem;
-    color: #888; /* Lighter grey for subtlety */
-    padding: 1px 15px;
-    margin-bottom: 6px; /* Reduced space between toggle and potential text */
-    transition: color 0.3s ease;
-    float: left; /* Position ellipses on the left */
-}
-
-.intro-toggle:hover {
-    color: #333;
-}
-
-.intro-text-box {
-    max-height: 0; /* Initially hidden */
-    overflow: hidden;
-    transition: max-height 0.5s ease-out, padding 0.5s ease-out; /* Smooth transition */
-    font-size: 0.95rem;
-    color: #555;
-    clear: both; /* Clear the floats */
-    text-align: center; /* Center the text */
-    /* Remove initial padding */
-    /* padding: 0 20px; */
-}
-
-.intro-text-box.show {
-    max-height: 100px; /* Arbitrary large enough height to reveal content */
-    padding: 15px 20px; /* Add padding ONLY when shown */
-}
-
-.intro-text-box p {
-    max-width: 600px; /* Limit width of the text */
-    margin: 0 auto; /* Center the paragraph within the box */
-}
-
-/* Image Grid - Using Flexbox */
 .image-grid {
-    display: flex; 
-    flex-wrap: wrap; 
-    gap: 5px; 
-    /* padding: 0 5px; */ /* Remove direct padding if main has padding */
-    /* Add max-width and center */
-    max-width: 1400px; /* Example max-width, adjust as needed */
-    margin: 0 auto; /* Center the grid */
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--grid-gap);
 }
 
-.image-grid .grid-item {
-    overflow: hidden; 
-    flex: 1 1 250px; /* Grow, Shrink, Basis - controls width */
-    height: 300px; /* ADDED - Fixed height for consistent aspect ratio */
-}
-
-/* REMOVED Hidden state for filtered-out items */
-/* 
-.grid-item.hidden {
-    opacity: 0;
-    max-height: 0; 
-    max-width: 0;
-    min-width: 0;
-    flex-basis: 0 !important; 
-    margin: 0 !important; 
-    padding: 0 !important; 
-    border: none !important; 
-    pointer-events: none; 
-    overflow: hidden; 
-}
-*/
-
-.image-grid img {
-    display: block;
-    width: 100%; 
-    height: 100%; /* RE-ADDED - Fill the container height */
-    object-fit: cover; /* RE-ADDED - Cover the area, cropping if needed */
+.grid-item {
     cursor: pointer;
 }
 
-/* REMOVE Hover effect */
-/* 
-.image-grid img:hover {
-    transform: scale(1.03);
+.grid-item-image {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: var(--color-block-bg);
+    overflow: hidden;
 }
-*/
 
-/* Modal Styles */
-.modal {
-    display: none; /* Hidden by default */
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
+.grid-item-image img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
-    overflow: auto;
-    /* background-color: rgba(0, 0, 0, 0.85); */ /* Old dark overlay */
-    background-color: #ffffff; /* CHANGED to white */
+    object-fit: contain;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.grid-item-image img.loaded { opacity: 1; }
+
+.empty-state {
+    color: var(--color-muted);
+    text-align: center;
+    padding: 60px 20px;
+    font-size: var(--font-size-base);
+}
+
+/* ─── Modal ─────────────────────────────────────────────────────────── */
+
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--color-bg);
     align-items: center;
     justify-content: center;
+    padding: 50px 12px;
 }
 
-.modal.show {
-    display: flex; /* Show the modal */
-    /* opacity: 1; */ /* REMOVED - No longer needed for transition */
+.modal.show { display: flex; }
+
+.modal-stage {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    max-width: 100%;
+    max-height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
-.modal-content {
+.modal-image {
     display: block;
-    margin: auto;
-    max-width: 90%;
-    max-height: 90vh;
-    /* Add transition for zoom effect */
+    max-width: 100%;
+    max-height: 100%;
     transition: transform 0.3s ease;
-    cursor: zoom-in; /* Indicate zoom is possible */
+    cursor: zoom-in;
+    user-select: none;
 }
 
-/* REMOVE Modal Animation */
-/* 
-@keyframes fadeInScale {
-    from {
-        transform: scale(0.9);
-        opacity: 0;
-    }
-    to {
-        transform: scale(1);
-        opacity: 1;
-    }
-}
-*/
-
-.close-button {
+.modal-close,
+.modal-nav {
     position: absolute;
-    top: 20px;
-    right: 35px;
-    /* color: #f1f1f1; */ /* Old light color */
-    color: #333; /* CHANGED to dark grey */
-    font-size: 40px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.3s ease;
+    background: transparent;
+    color: var(--color-muted);
+    line-height: 1;
+    border-radius: var(--radius);
+    transition: color 0.12s ease, background-color 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.close-button:hover,
-.close-button:focus {
-    /* color: #bbb; */ /* Old light hover color */
-    color: #666; /* CHANGED to a medium grey for hover */
-    text-decoration: none;
+.modal-close {
+    top: 10px;
+    right: 12px;
+    font-size: 30px;
+    padding: 4px 10px;
+}
+.modal-close:hover { color: var(--color-text); background: var(--color-btn-bg); }
+
+.modal-nav {
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 32px;
+    padding: 4px 8px;
+}
+.modal-nav-prev { left: 6px; }
+.modal-nav-next { right: 6px; }
+.modal-nav:hover { color: var(--color-text); background: var(--color-btn-bg); }
+
+.modal-caption {
+    position: absolute;
+    bottom: 14px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--color-muted);
+    font-size: var(--font-size-base);
+    white-space: nowrap;
 }
 
-#spinner {
+/* ─── Spinner ───────────────────────────────────────────────────────── */
+
+.spinner {
     position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    border: 8px solid #f3f3f3;
-    border-top: 8px solid #3498db;
+    width: 22px;
+    height: 22px;
+    border: 2px solid var(--color-line);
+    border-top-color: var(--color-text);
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    animation: spin 1s linear infinite;
-    z-index: 1000;
+    animation: spin 0.8s linear infinite;
+    z-index: 1100;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+
+/* ─── Responsive: scale up from mobile ──────────────────────────────── */
+
+@media (min-width: 600px) {
+    :root {
+        --page-pad-x: 30px;
+        --page-pad-y: 28px;
+        --grid-gap: 10px;
+        --font-size-title: 26px;
+    }
+    .image-grid { grid-template-columns: repeat(3, 1fr); }
+    .page-header {
+        flex-direction: row;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 20px;
+    }
+    .header-actions { margin-top: 6px; }
+    .modal { padding: 60px 30px; }
+    .modal-close { top: 14px; right: 20px; font-size: 32px; }
+    .modal-nav { font-size: 36px; padding: 6px 12px; }
+    .modal-nav-prev { left: 18px; }
+    .modal-nav-next { right: 18px; }
 }
 
-/* Responsive Adjustments */
-@media (max-width: 768px) {
-    header {
-        padding: 15px 20px; 
+@media (min-width: 900px) {
+    :root {
+        --page-pad-x: 50px;
+        --grid-gap: 12px;
+        --font-size-title: 28px;
     }
-    .site-title {
-        font-size: 1.1rem;
-    }
-    nav ul li {
-        margin: 0 10px;
-    }
-    nav button {
-        font-size: 0.9rem;
-    }
-    .image-grid {
-        gap: 3px;
-        padding: 0 3px;
-    }
-    .image-grid .grid-item {
-        flex-basis: 150px; /* Adjust basis for smaller screens */
-    }
+    .image-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
-@media (max-width: 480px) {
-    header {
-        padding: 15px 15px; 
-        flex-direction: column; 
-        align-items: flex-start; 
+@media (min-width: 1300px) {
+    :root {
+        --page-pad-x: 65px;
+        --grid-gap: 15px;
     }
-    .site-title {
-        margin-bottom: 10px; 
-        font-size: 1rem;
-    }
-    nav ul {
-        width: 100%; 
-        text-align: left; 
-    }
-    nav ul li {
-        margin: 0 8px 0 0; 
-    }
-    nav button {
-        font-size: 0.85rem;
-    }
-    .image-grid {
-        gap: 2px;
-        padding: 0 2px;
-    }
-     .image-grid .grid-item {
-        flex-basis: calc(50% - 2px); /* Approx 2 columns with gap */
-    }
-    .modal-content {
-        max-width: 95%;
-        max-height: 85vh;
-    }
-    .close-button {
-        font-size: 30px;
-        top: 15px;
-        right: 25px;
-    }
-} 
+    .image-grid { grid-template-columns: repeat(5, 1fr); }
+}

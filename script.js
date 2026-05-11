@@ -1,688 +1,271 @@
 document.addEventListener('DOMContentLoaded', () => {
     const imageGrid = document.getElementById('image-grid');
-    const filterButtons = document.querySelectorAll('nav button');
+    if (!imageGrid) return; // not on the gallery page
+
+    const images = window.PORTRA_IMAGES || [];
+
+    // ─── Elements ────────────────────────────────────────────────────
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const sortToggle = document.getElementById('sort-toggle');
+    const sortArrow = document.getElementById('sort-arrow');
+    const emptyState = document.getElementById('empty-state');
+
     const modal = document.getElementById('modal');
     const modalImage = document.getElementById('modal-image');
-    const closeButton = document.querySelector('.close-button');
-    const siteTitle = document.querySelector('.site-title');
-    const introToggle = document.getElementById('intro-toggle'); // Get the toggle element
-    const introTextBox = document.getElementById('intro-text-box'); // Get the text box element
-    const sortToggle = document.getElementById('sort-toggle'); // Get the sort toggle button
+    const modalCaption = document.getElementById('modal-caption');
+    const modalClose = document.querySelector('.modal-close');
+    const modalPrev = document.querySelector('.modal-nav-prev');
+    const modalNext = document.querySelector('.modal-nav-next');
     const spinner = document.getElementById('spinner');
 
-    const BASE_FULL = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/v1753994362/';
-    const BASE_THUMB = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_1000,q_auto,f_auto/v1753994362/';
-    const BASE_LOW_QUALITY = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_200,q_auto,f_auto/v1753994362/';
-    const BASE_HIGH_QUALITY = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_1000,q_auto,f_auto/v1753994362/';
+    // ─── Cloudinary URLs ─────────────────────────────────────────────
+    const BASE_THUMB = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_800,q_auto,f_auto/v1753994362/';
+    const BASE_HIGH = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_1600,q_auto,f_auto/v1753994362/';
 
-    let isZoomed = false; // Add state variable for zoom
-    let originalTitle = 'POORBYPORTRA';
-    let isReversed = true; // Track if sorting is reversed - default to true for Z-A
-    let currentFilter = 'all'; // Track current filter
+    // ─── State ───────────────────────────────────────────────────────
+    let currentFilter = 'all';
+    let isReversed = true; // default Z→A like the original
+    let currentList = []; // cached current sorted list
+    let modalIndex = -1;
+    let isZoomed = false;
+    let lastTouchX = 0;
+    let lastTouchY = 0;
 
+    // ─── Image data ──────────────────────────────────────────────────
 
-    const images = [
-        { filename: 'export-001-b.jpg', categories: ['all'] },
-        { filename: 'export-002-b.jpg', categories: ['all'] },
-        { filename: 'export-003-b.jpg', categories: ['all'] },
-        { filename: 'export-004-b.jpg', categories: ['all'] },
-        { filename: 'export-005-b.jpg', categories: ['all'] },
-        { filename: 'export-006-b.jpg', categories: ['all'] },
-        { filename: 'export-007-b.jpg', categories: ['all'] },
-        { filename: 'export-008-b.jpg', categories: ['all'] },
-        { filename: 'export-009-b.jpg', categories: ['all'] },
-        { filename: 'export-010-b.jpg', categories: ['all'] },
-        { filename: 'export-011-b.jpg', categories: ['all'] },
-        { filename: 'export-012-b.jpg', categories: ['all'] },
-        { filename: 'export-013-b.jpg', categories: ['all'] },
-        { filename: 'export-014-b.jpg', categories: ['all'] },
-        { filename: 'export-015-b.jpg', categories: ['landscape'] },
-        { filename: 'export-016-b.jpg', categories: ['all'] },
-        { filename: 'export-017-b.jpg', categories: ['all'] },
-        { filename: 'export-018-b.jpg', categories: ['all'] },
-        { filename: 'export-019-b.jpg', categories: ['all'] },
-        { filename: 'export-020-b.jpg', categories: ['all'] },
-        { filename: 'export-022-b.jpg', categories: ['all'] },
-        { filename: 'export-023-b.jpg', categories: ['all'] },
-        { filename: 'export-024-b.jpg', categories: ['all'] },
-        { filename: 'export-025-b.jpg', categories: ['all'] },
-        { filename: 'export-026-b.jpg', categories: ['all'] },
-        { filename: 'export-027-b.jpg', categories: ['all'] },
-        { filename: 'export-028-b.jpg', categories: ['all'] },
-        { filename: 'export-029-b.jpg', categories: ['all'] },
-        { filename: 'export-030-b.jpg', categories: ['all'] },
-        { filename: 'export-031-b.jpg', categories: ['all'] },
-        { filename: 'export-032-b.jpg', categories: ['all'] },
-        { filename: 'export-033-b.jpg', categories: ['all'] },
-        { filename: 'export-034-b.jpg', categories: ['all'] },
-        { filename: 'export-001.jpg', categories: ['all'] },
-        { filename: 'export-002.jpg', categories: ['landscape'] },
-        { filename: 'export-003.jpg', categories: ['landscape'] },
-        { filename: 'export-004.jpg', categories: ['landscape'] },
-        { filename: 'export-005.jpg', categories: ['landscape'] },
-        { filename: 'export-006.jpg', categories: ['all'] },
-        { filename: 'export-007.jpg', categories: ['landscape'] },
-        { filename: 'export-008.jpg', categories: ['all'] },
-        { filename: 'export-009.jpg', categories: ['all'] },
-        { filename: 'export-010.jpg', categories: ['landscape'] },
-        { filename: 'export-011.jpg', categories: ['all'] },
-        { filename: 'export-012.jpg', categories: ['all'] },
-        { filename: 'export-013.jpg', categories: ['all'] },
-        { filename: 'export-014.jpg', categories: ['all'] },
-        { filename: 'export-015.jpg', categories: ['all'] },
-        { filename: 'export-016.jpg', categories: ['all'] },
-        { filename: 'export-017.jpg', categories: ['landscape'] },
-        { filename: 'export-018.jpg', categories: ['landscape'] },
-        { filename: 'export-019.jpg', categories: ['landscape'] },
-        { filename: 'export-020.jpg', categories: ['landscape'] },
-        { filename: 'export-021.jpg', categories: ['all'] },
-        { filename: 'export-022.jpg', categories: ['all'] },
-        { filename: 'export-023.jpg', categories: ['all'] },
-        { filename: 'export-024.jpg', categories: ['all'] },
-        { filename: 'export-025.jpg', categories: ['all'] },
-        { filename: 'export-026.jpg', categories: ['all'] },
-        { filename: 'export-027.jpg', categories: ['all'] },
-        { filename: 'export-028.jpg', categories: ['all'] },
-        { filename: 'export-029.jpg', categories: ['landscape'] },
-        { filename: 'export-030.jpg', categories: ['all'] },
-        { filename: 'export-031.jpg', categories: ['all'] },
-        { filename: 'export-032.jpg', categories: ['all'] },
-        { filename: 'export-033.jpg', categories: ['all'] },
-        { filename: 'export-034.jpg', categories: ['all'] },
-        { filename: 'export-035.jpg', categories: ['all'] },
-        { filename: 'export-036.jpg', categories: ['landscape'] },
-        { filename: 'export-037.jpg', categories: ['all'] },
-        { filename: 'export-038.jpg', categories: ['all'] },
-        { filename: 'export-039.jpg', categories: ['all'] },
-        { filename: 'export-040.jpg', categories: ['landscape'] },
-        { filename: 'export-041.jpg', categories: ['all'] },
-        { filename: 'export-042.jpg', categories: ['landscape'] },
-        { filename: 'export-043.jpg', categories: ['landscape'] },
-        { filename: 'export-044.jpg', categories: ['landscape'] },
-        { filename: 'export-045.jpg', categories: ['all'] },
-        { filename: 'export-046.jpg', categories: ['all'] },
-        { filename: 'export-047.jpg', categories: ['all'] },
-        { filename: 'export-048.jpg', categories: ['all'] },
-        { filename: 'export-049.jpg', categories: ['all'] },
-        { filename: 'export-050.jpg', categories: ['landscape'] },
-        { filename: 'export-051.jpg', categories: ['landscape'] },
-        { filename: 'export-052.jpg', categories: ['landscape'] },
-        { filename: 'export-053.jpg', categories: ['landscape'] },
-        { filename: 'export-054.jpg', categories: ['all'] },
-        { filename: 'export-055.jpg', categories: ['all'] },
-        { filename: 'export-056.jpg', categories: ['all'] },
-        { filename: 'export-057.jpg', categories: ['all'] },
-        { filename: 'export-058.jpg', categories: ['all'] },
-        { filename: 'export-059.jpg', categories: ['all'] },
-        { filename: 'export-060.jpg', categories: ['all'] },
-        { filename: 'export-061.jpg', categories: ['all'] },
-        { filename: 'export-062.jpg', categories: ['all'] },
-        { filename: 'export-063.jpg', categories: ['all'] },
-        { filename: 'export-064.jpg', categories: ['landscape'] },
-        { filename: 'export-065.jpg', categories: ['landscape'] },
-        { filename: 'export-066.jpg', categories: ['all'] },
-        { filename: 'export-067.jpg', categories: ['all'] },
-        { filename: 'export-068.jpg', categories: ['all'] },
-        { filename: 'export-069.jpg', categories: ['landscape'] },
-        { filename: 'export-070.jpg', categories: ['landscape'] },
-        { filename: 'export-071.jpg', categories: ['landscape'] },
-        { filename: 'export-072.jpg', categories: ['all'] },
-        { filename: 'export-073.jpg', categories: ['all'] },
-        { filename: 'export-074.jpg', categories: ['all'] },
-        { filename: 'export-075-1.jpg', categories: ['all'] },
-        { filename: 'export-075-2.jpg', categories: ['all'] },
-        { filename: 'export-075-3.jpg', categories: ['all'] },
-        { filename: 'export-075-4.jpg', categories: ['all'] },
-        { filename: 'export-075-5.jpg', categories: ['all'] },
-        { filename: 'export-075-6.jpg', categories: ['all'] },
-        { filename: 'export-075-7.jpg', categories: ['all'] },
-        { filename: 'export-075-8.jpg', categories: ['all'] },
-        { filename: 'export-075-9.jpg', categories: ['all'] },
-        { filename: 'export-075-10.jpg', categories: ['all'] },
-        { filename: 'export-075-11.jpg', categories: ['all'] },
-        { filename: 'export-075-12.jpg', categories: ['all'] },
-        { filename: 'export-075-13.jpg', categories: ['all'] },
-        { filename: 'export-075.jpg', categories: ['all'] },
-        { filename: 'export-076.jpg', categories: ['all'] },
-        { filename: 'export-077.jpg', categories: ['all'] },
-        { filename: 'export-079.jpg', categories: ['landscape'] },
-        { filename: 'export-080.jpg', categories: ['landscape'] },
-        { filename: 'export-081.jpg', categories: ['all'] },
-        { filename: 'export-082.jpg', categories: ['all'] },
-        { filename: 'export-083.jpg', categories: ['all'] },
-        { filename: 'export-084.jpg', categories: ['landscape'] },
-        { filename: 'export-085.jpg', categories: ['all'] },
-        { filename: 'export-086.jpg', categories: ['all'] },
-        { filename: 'export-087.jpg', categories: ['all'] },
-        { filename: 'export-088.jpg', categories: ['all'] },
-        { filename: 'export-089.jpg', categories: ['all'] },
-        { filename: 'export-090.jpg', categories: ['all'] },
-        { filename: 'export-091.jpg', categories: ['landscape'] },
-        { filename: 'export-092.jpg', categories: ['all'] },
-        { filename: 'export-093.jpg', categories: ['all'] },
-        { filename: 'export-094.jpg', categories: ['landscape'] },
-        { filename: 'export-095.jpg', categories: ['landscape'] },
-        { filename: 'export-096.jpg', categories: ['landscape'] },
-        { filename: 'export-097.jpg', categories: ['all'] },
-        { filename: 'export-098.jpg', categories: ['all'] },
-        { filename: 'export-099.jpg', categories: ['landscape'] },
-        { filename: 'export-100.jpg', categories: ['all'] },
-        { filename: 'export-101.jpg', categories: ['landscape'] },
-        { filename: 'export-102.jpg', categories: ['all'] },
-        { filename: 'export-103.jpg', categories: ['landscape'] },
-        { filename: 'export-104.jpg', categories: ['all'] },
-        { filename: 'export-105.jpg', categories: ['landscape'] },
-        { filename: 'export-106.jpg', categories: ['landscape'] },
-        { filename: 'export-107.jpg', categories: ['all'] },
-        { filename: 'export-108.jpg', categories: ['all'] },
-        { filename: 'export-109.jpg', categories: ['all'] },
-        { filename: 'export-110.jpg', categories: ['all'] },
-        { filename: 'export-111.jpg', categories: ['all'] },
-        { filename: 'export-112.jpg', categories: ['all'] },
-        { filename: 'export-113.jpg', categories: ['landscape'] },
-        { filename: 'export-114.jpg', categories: ['landscape'] },
-        { filename: 'export-115.jpg', categories: ['all'] },
-        { filename: 'export-116.jpg', categories: ['all'] },
-        { filename: 'export-117.jpg', categories: ['all'] },
-        { filename: 'export-118.jpg', categories: ['all'] },
-        { filename: 'export-119.jpg', categories: ['all'] },
-        { filename: 'export-120.jpg', categories: ['all'] },
-        { filename: 'export-121.jpg', categories: ['all'] },
-        { filename: 'export-122.jpg', categories: ['all'] },
-        { filename: 'export-123.jpg', categories: ['all'] },
-        { filename: 'export-124.jpg', categories: ['all'] }, 
-        { filename: 'export-125.jpg', categories: ['all'] },
-        { filename: 'export-126.jpg', categories: ['all'] },
-        { filename: 'export-127.jpg', categories: ['all'] },
-        { filename: 'export-128.jpg', categories: ['all'] },
-        { filename: 'export-129.jpg', categories: ['all'] },
-        { filename: 'export-130.jpg', categories: ['all'] }, 
-        { filename: 'export-131.jpg', categories: ['all'] },
-        { filename: 'export-132.jpg', categories: ['all'] },
-        { filename: 'export-133.jpg', categories: ['all'] },
-        { filename: 'export-134.jpg', categories: ['all'] },
-        { filename: 'export-135.jpg', categories: ['all'] },
-        { filename: 'export-136.jpg', categories: ['all'] }, 
-        { filename: 'export-137.jpg', categories: ['all'] },
-        { filename: 'export-138.jpg', categories: ['all'] },
-        { filename: 'export-139.jpg', categories: ['all'] },
-        { filename: 'export-140.jpg', categories: ['all'] },
-        { filename: 'export-141.jpg', categories: ['all'] },
-        { filename: 'export-142.jpg', categories: ['all'] },
-        { filename: 'export-143.jpg', categories: ['all'] },
-        { filename: 'export-144.jpg', categories: ['all'] },
-        { filename: 'export-145.jpg', categories: ['all'] },
-        { filename: 'export-146.jpg', categories: ['all'] },
-        { filename: 'export-147.jpg', categories: ['landscape'] },
-        { filename: 'export-148.jpg', categories: ['landscape'] },    
-        { filename: 'export-149.jpg', categories: ['all'] },
-        { filename: 'export-150.jpg', categories: ['all'] },
-        { filename: 'export-151.jpg', categories: ['all'] },
-        { filename: 'export-152.jpg', categories: ['all'] },
-        { filename: 'export-153.jpg', categories: ['all'] },
-        { filename: 'export-154.jpg', categories: ['all'] }, 
-        { filename: 'export-155.jpg', categories: ['all'] },
-        { filename: 'export-156.jpg', categories: ['all'] },
-        { filename: 'export-157.jpg', categories: ['all'] },
-        { filename: 'export-158.jpg', categories: ['all'] },
-        { filename: 'export-159.jpg', categories: ['all'] },
-        { filename: 'export-160.jpg', categories: ['all'] }, 
-        { filename: 'export-161.jpg', categories: ['all'] },
-        { filename: 'export-162.jpg', categories: ['landscape'] },
-        { filename: 'export-163.jpg', categories: ['all'] },
-        { filename: 'export-164.jpg', categories: ['all'] },
-        { filename: 'export-165.jpg', categories: ['all'] },
-        { filename: 'export-166.jpg', categories: ['all'] }, 
-        { filename: 'export-167.jpg', categories: ['all'] },
-        { filename: 'export-168.jpg', categories: ['all'] },
-        { filename: 'export-169.jpg', categories: ['all'] },
-        { filename: 'export-170.jpg', categories: ['all'] },
-        { filename: 'export-171.jpg', categories: ['all'] },
-        { filename: 'export-172.jpg', categories: ['all'] }, 
-        { filename: 'export-173.jpg', categories: ['all'] },
-        { filename: 'export-174.jpg', categories: ['all'] },
-        { filename: 'export-175.jpg', categories: ['all'] },
-        { filename: 'export-176.jpg', categories: ['all'] },
-        { filename: 'export-177.jpg', categories: ['all'] },
-        { filename: 'export-178.jpg', categories: ['all'] }, 
-        { filename: 'export-179.jpg', categories: ['all'] },
-        { filename: 'export-180.jpg', categories: ['all'] },
-        { filename: 'export-181.jpg', categories: ['all'] },
-        { filename: 'export-182.jpg', categories: ['all'] },
-        { filename: 'export-183.jpg', categories: ['all'] },
-        { filename: 'export-184.jpg', categories: ['all'] }, 
-        { filename: 'export-185.jpg', categories: ['landscape'] },
-        { filename: 'export-186.jpg', categories: ['all'] },
-        { filename: 'export-187.jpg', categories: ['landscape'] },
-        { filename: 'export-188.jpg', categories: ['landscape'] },
-        { filename: 'export-189.jpg', categories: ['landscape'] },
-        { filename: 'export-190.jpg', categories: ['all'] },    
-        { filename: 'export-191.jpg', categories: ['all'] },
-        { filename: 'export-192.jpg', categories: ['all'] },
-        { filename: 'export-193.jpg', categories: ['landscape'] },
-        { filename: 'export-194.jpg', categories: ['all'] },
-        { filename: 'export-195.jpg', categories: ['all'] },
-        { filename: 'export-196.jpg', categories: ['all'] },
-        { filename: 'export-197.jpg', categories: ['all'] },
-        { filename: 'export-198.jpg', categories: ['all'] },
-        { filename: 'export-199.jpg', categories: ['all'] },
-        { filename: 'export-200.jpg', categories: ['all'] },
-        { filename: 'export-201.jpg', categories: ['all'] },
-        { filename: 'export-202.jpg', categories: ['landscape'] },
-        { filename: 'export-203.jpg', categories: ['landscape'] },
-        { filename: 'export-204.jpg', categories: ['all'] },
-        { filename: 'export-205.jpg', categories: ['all'] },
-        { filename: 'export-206.jpg', categories: ['all'] },
-        { filename: 'export-207.jpg', categories: ['all'] },
-        { filename: 'export-208.jpg', categories: ['all'] },
-        { filename: 'export-209.jpg', categories: ['all'] },
-        { filename: 'export-210.jpg', categories: ['all'] },
-        { filename: 'export-211.jpg', categories: ['all'] },
-        { filename: 'export-212.jpg', categories: ['all'] },
-        { filename: 'export-213.jpg', categories: ['all'] },
-        { filename: 'export-214.jpg', categories: ['all'] },
-        { filename: 'export-215.jpg', categories: ['all'] },
-        { filename: 'export-216.jpg', categories: ['all'] },
-        { filename: 'export-217.jpg', categories: ['all'] },
-        { filename: 'export-218.jpg', categories: ['all'] },
-        { filename: 'export-219.jpg', categories: ['all'] },
-        { filename: 'export-220.jpg', categories: ['all'] },
-        { filename: 'export-221.jpg', categories: ['all'] },
-        { filename: 'export-222.jpg', categories: ['all'] },
-        { filename: 'export-223.jpg', categories: ['all'] },
-        { filename: 'export-224.jpg', categories: ['all'] },
-        { filename: 'export-225.jpg', categories: ['landscape'] },
-        { filename: 'export-226.jpg', categories: ['landscape'] },
-        { filename: 'export-227.jpg', categories: ['all'] },
-        { filename: 'export-228.jpg', categories: ['all'] },
-        { filename: 'export-229.jpg', categories: ['landscape'] },
-        { filename: 'export-230.jpg', categories: ['all'] },
-        { filename: 'export-231.jpg', categories: ['all'] },
-        { filename: 'export-232.jpg', categories: ['all'] },
-        { filename: 'export-233.jpg', categories: ['all'] },
-        { filename: 'export-234.jpg', categories: ['all'] },    
-        { filename: 'export-235.jpg', categories: ['all'] },
-        { filename: 'export-236.jpg', categories: ['all'] },
-        { filename: 'export-237.jpg', categories: ['all'] },
-        { filename: 'export-238.jpg', categories: ['all'] },
-        { filename: 'export-239.jpg', categories: ['all'] },
-        { filename: 'export-240.jpg', categories: ['all'] },
-        { filename: 'export-241.jpg', categories: ['all'] },
-        { filename: 'export-242.jpg', categories: ['all'] },
-        { filename: 'export-243.jpg', categories: ['all'] },
-        { filename: 'export-244.jpg', categories: ['all'] },
-        { filename: 'export-245.jpg', categories: ['all'] },
-        { filename: 'export-246.jpg', categories: ['all'] },
-        { filename: 'export-247.jpg', categories: ['all'] },
-        { filename: 'export-248.jpg', categories: ['landscape'] },
-        { filename: 'export-249.jpg', categories: ['all'] },
-        { filename: 'export-250.jpg', categories: ['all'] },
-        { filename: 'export-251.jpg', categories: ['all'] },
-        { filename: 'export-252.jpg', categories: ['all'] },
-        { filename: 'export-253.jpg', categories: ['all'] },
-        { filename: 'export-254.jpg', categories: ['all'] },
-        { filename: 'export-255.jpg', categories: ['all'] },
-        { filename: 'export-256.jpg', categories: ['all'] },
-        { filename: 'export-257.jpg', categories: ['all'] },
-        { filename: 'export-258.jpg', categories: ['all'] },
-        { filename: 'export-259.jpg', categories: ['all'] },
-        { filename: 'export-260.jpg', categories: ['all'] },
-        { filename: 'export-261.jpg', categories: ['all'] },
-        { filename: 'export-262.jpg', categories: ['all'] },
-        { filename: 'export-263.jpg', categories: ['all'] },
-        { filename: 'export-264.jpg', categories: ['all'] },
-        { filename: 'export-265.jpg', categories: ['all'] },
-        { filename: 'export-266.jpg', categories: ['all'] },
-        { filename: 'export-267.jpg', categories: ['all'] },
-        { filename: 'export-268.jpg', categories: ['all'] },
-        { filename: 'export-269.jpg', categories: ['landscape'] },
-        { filename: 'export-270.jpg', categories: ['landscape'] },
-        { filename: 'export-271.jpg', categories: ['all'] },
-        { filename: 'export-272.jpg', categories: ['all'] },
-        { filename: 'export-273.jpg', categories: ['all'] },
-        { filename: 'export-274.jpg', categories: ['all'] },
-        { filename: 'export-275.jpg', categories: ['all'] },
-        { filename: 'export-276.jpg', categories: ['all'] },
-        { filename: 'export-277.jpg', categories: ['all'] },
-        { filename: 'export-278.jpg', categories: ['all'] },
-        { filename: 'export-279.jpg', categories: ['all'] },
-        { filename: 'export-280.jpg', categories: ['all'] },
-        { filename: 'export-281.jpg', categories: ['all'] },
-        { filename: 'export-282.jpg', categories: ['all'] },
-        { filename: 'export-283.jpg', categories: ['all'] },
-        { filename: 'export-284.jpg', categories: ['all'] },
-        { filename: 'export-285.jpg', categories: ['all'] },
-        { filename: 'export-286.jpg', categories: ['all'] },
-        { filename: 'export-287.jpg', categories: ['all'] },
-        { filename: 'export-288.jpg', categories: ['all'] },
-        { filename: 'export-289.jpg', categories: ['all'] },
-        { filename: 'export-290.jpg', categories: ['all'] },
-        { filename: 'export-292.jpg', categories: ['all'] },
-        { filename: 'export-293.jpg', categories: ['all'] },
-        { filename: 'export-294.jpg', categories: ['all'] },
-        { filename: 'export-295.jpg', categories: ['all'] },
-        { filename: 'export-296.jpg', categories: ['all'] },
-        { filename: 'export-297.jpg', categories: ['all'] },
-        { filename: 'export-298.jpg', categories: ['all'] },
-        { filename: 'export-299.jpg', categories: ['all'] },
-        { filename: 'export-300.jpg', categories: ['all'] },
-        { filename: 'export-301.jpg', categories: ['all'] },
-        { filename: 'export-302.jpg', categories: ['all'] },
-        { filename: 'export-303.jpg', categories: ['all'] },
-        { filename: 'export-304.jpg', categories: ['all'] },
-        { filename: 'export-305.jpg', categories: ['all'] },
-        { filename: 'export-306.jpg', categories: ['all'] },
-        { filename: 'export-307.jpg', categories: ['all'] },
-        { filename: 'export-308.jpg', categories: ['all'] },
-        { filename: 'export-309.jpg', categories: ['all'] },
-        { filename: 'export-310.jpg', categories: ['all'] },
-        { filename: 'export-311.jpg', categories: ['all'] },
-        { filename: 'export-312.jpg', categories: ['landscape'] },
-        { filename: 'export-313.jpg', categories: ['all'] },
-        { filename: 'export-314.jpg', categories: ['all'] },
-        { filename: 'export-315.jpg', categories: ['all'] },
-        { filename: 'export-316.jpg', categories: ['all'] },
-        { filename: 'export-317.jpg', categories: ['all'] },
-        { filename: 'export-318.jpg', categories: ['all'] },
-        { filename: 'export-319.jpg', categories: ['all'] },
-        { filename: 'export-320.jpg', categories: ['all'] },
-        { filename: 'export-321.jpg', categories: ['all'] },
-        { filename: 'export-322.jpg', categories: ['all'] },
-        { filename: 'export-323.jpg', categories: ['all'] },
-        { filename: 'export-324.jpg', categories: ['all'] },
-        { filename: 'export-325.jpg', categories: ['all'] },
-        { filename: 'export-326.jpg', categories: ['all'] },
-        { filename: 'export-327.jpg', categories: ['all'] },
-        { filename: 'export-328.jpg', categories: ['all'] },
-        { filename: 'export-329.jpg', categories: ['all'] },
-        { filename: 'export-330.jpg', categories: ['all'] },
-        { filename: 'export-331.jpg', categories: ['all'] },
-        { filename: 'export-332.jpg', categories: ['all'] },
-        { filename: 'export-333.jpg', categories: ['all'] },
-        { filename: 'export-334.jpg', categories: ['all'] },
-        { filename: 'export-335.jpg', categories: ['all'] },
-        { filename: 'export-337.jpg', categories: ['all'] },
-        { filename: 'export-340.jpg', categories: ['all'] },
-        { filename: 'export-341.jpg', categories: ['all'] },
-        { filename: 'export-342.jpg', categories: ['all'] },
-        { filename: 'export-343.jpg', categories: ['all'] },
-        { filename: 'export-344.jpg', categories: ['all'] },
-        { filename: 'export-345.jpg', categories: ['all'] },
-        { filename: 'export-346.jpg', categories: ['all'] },
-        { filename: 'export-347.jpg', categories: ['all'] },
-        { filename: 'export-348.jpg', categories: ['all'] },
-        { filename: 'export-349.jpg', categories: ['all'] },
-        { filename: 'export-350.jpg', categories: ['all'] },
-        { filename: 'export-351.jpg', categories: ['all'] },
-        { filename: 'export-352.jpg', categories: ['all'] },
-        { filename: 'export-353.jpg', categories: ['all'] },
-        { filename: 'export-354.jpg', categories: ['all'] },
-        { filename: 'export-355.jpg', categories: ['all'] },
-        { filename: 'export-356.jpg', categories: ['all'] }
-    ];
-    // --- Functions --- 
+    // ─── Helpers ─────────────────────────────────────────────────────
+    function captionFor(filename) {
+        return filename.replace(/\.[^.]+$/, '');
+    }
 
-    // Function to sort images based on current order
-    function sortImages(imagesToSort, orderType) {
-        const sortedImages = [...imagesToSort]; // Create a copy to avoid mutating original
-        
-        switch (orderType) {
-            case 'alphabetical':
-                return sortedImages.sort((a, b) => b.filename.localeCompare(a.filename)); // Reverse alphabetical (Z-A)
-            case 'random':
-                // Fisher-Yates shuffle algorithm
-                for (let i = sortedImages.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [sortedImages[i], sortedImages[j]] = [sortedImages[j], sortedImages[i]];
-                }
-                return sortedImages;
-            case 'default':
-            default:
-                return sortedImages; // Return in original order
+    function getSorted(list) {
+        const sorted = [...list];
+        if (isReversed) {
+            sorted.sort((a, b) => b.filename.localeCompare(a.filename));
+        }
+        return sorted;
+    }
+
+    function applyFilters() {
+        return images.filter(img =>
+            currentFilter === 'all' || img.categories.includes(currentFilter)
+        );
+    }
+
+    // ─── Render ──────────────────────────────────────────────────────
+    function render() {
+        currentList = getSorted(applyFilters());
+        imageGrid.innerHTML = '';
+        emptyState.hidden = currentList.length !== 0;
+
+        const frag = document.createDocumentFragment();
+        currentList.forEach((imgData, index) => {
+            const item = document.createElement('div');
+            item.className = 'grid-item';
+            item.dataset.index = String(index);
+
+            const wrap = document.createElement('div');
+            wrap.className = 'grid-item-image';
+
+            const img = document.createElement('img');
+            img.src = BASE_THUMB + imgData.filename;
+            img.alt = captionFor(imgData.filename);
+            img.loading = 'lazy';
+            img.decoding = 'async';
+            img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
+
+            wrap.appendChild(img);
+            item.appendChild(wrap);
+            item.addEventListener('click', () => openModal(index));
+            frag.appendChild(item);
+        });
+
+        imageGrid.appendChild(frag);
+    }
+
+    function syncHashToCurrent() {
+        const data = currentList[modalIndex];
+        if (!data) return;
+        const newHash = '#' + encodeURIComponent(data.filename);
+        if (location.hash !== newHash) {
+            history.replaceState(null, '', location.pathname + newHash);
         }
     }
 
-    // Function to display images in the grid (Now using simplified structure)
-    function displayImages(filter = 'all', orderType = 'default') {
-        imageGrid.innerHTML = ''; // Clear existing grid
-        const filteredImages = images.filter(img => 
-            filter === 'all' || img.categories.includes(filter)
-        );
-
-        // Sort the filtered images
-        const sortedImages = sortImages(filteredImages, orderType);
-
-        sortedImages.forEach(imgData => {
-            const gridItem = document.createElement('div');
-            gridItem.classList.add('grid-item');
-
-            const imgElement = document.createElement('img');
-            imgElement.src = BASE_THUMB + imgData.filename; // Use Cloudinary thumbnail URL
-            imgElement.dataset.fullSrc = BASE_FULL + imgData.filename; // Store full resolution URL
-            const altText = imgData.categories.length > 0 
-                ? `Photo - ${imgData.categories.join(', ')}` 
-                : 'Photo';
-            imgElement.alt = altText;
-            imgElement.loading = 'lazy'; 
-            
-            imgElement.addEventListener('click', () => openModal(BASE_FULL + imgData.filename)); // Use full resolution URL for modal
-
-            gridItem.appendChild(imgElement);
-            imageGrid.appendChild(gridItem);
-        });
-    }
-
-    // Function to open the modal (Accepts full image source)
-    function openModal(srcFull) {
-        isZoomed = false; // Reset zoom state on open
-        modalImage.style.transform = 'scale(1)'; // Reset transform
-        modalImage.style.transformOrigin = 'center center'; // Reset origin
-        modalImage.style.cursor = 'zoom-in'; // Reset cursor
-        modalImage.src = srcFull; // Use the full image source passed in
+    // ─── Modal ───────────────────────────────────────────────────────
+    function openModal(index) {
+        modalIndex = index;
+        showModalImage();
         modal.classList.add('show');
-        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        modal.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden';
+        syncHashToCurrent();
     }
 
-    // Function to close the modal
-    function closeModal() {
-        modal.classList.remove('show');
-        document.body.style.overflow = ''; // Restore scrolling
-        // Reset zoom state potentially needed if closed while zoomed
-        isZoomed = false; 
+    function showModalImage() {
+        const data = currentList[modalIndex];
+        if (!data) return;
+        isZoomed = false;
         modalImage.style.transform = 'scale(1)';
         modalImage.style.transformOrigin = 'center center';
         modalImage.style.cursor = 'zoom-in';
+
+        spinner.hidden = false;
+        modalImage.style.opacity = '0';
+
+        const fullSrc = BASE_HIGH + data.filename;
+        modalImage.src = fullSrc;
+        modalImage.alt = captionFor(data.filename);
+        modalCaption.textContent = `${captionFor(data.filename)}  ·  ${modalIndex + 1} / ${currentList.length}`;
+
+        modalImage.onload = () => {
+            spinner.hidden = true;
+            modalImage.style.opacity = '1';
+        };
+        modalImage.onerror = () => {
+            spinner.hidden = true;
+            modalImage.style.opacity = '1';
+        };
     }
 
-    // --- Event Listeners --- 
-
-    // --- Custom Zoom Mechanism ---
-    modalImage.addEventListener('touchmove', (event) => {
-        if (isZoomed) {
-            event.preventDefault(); // Prevent default pinch-to-zoom
+    function closeModal() {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        document.body.style.overflow = '';
+        isZoomed = false;
+        modalImage.style.transform = 'scale(1)';
+        modalImage.style.transformOrigin = 'center center';
+        if (location.hash) {
+            history.replaceState(null, '', location.pathname);
         }
-    }, { passive: false });
+    }
 
+    function navigate(dir) {
+        if (currentList.length === 0) return;
+        if (dir === 'next') {
+            modalIndex = (modalIndex + 1) % currentList.length;
+        } else {
+            modalIndex = (modalIndex - 1 + currentList.length) % currentList.length;
+        }
+        showModalImage();
+        syncHashToCurrent();
+    }
+
+    // ─── Event listeners ─────────────────────────────────────────────
+    filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterButtons.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter;
+            render();
+        });
+    });
+
+    if (sortToggle) {
+        sortToggle.addEventListener('click', () => {
+            isReversed = !isReversed;
+            sortArrow.textContent = isReversed ? '↓' : '↑';
+            render();
+        });
+    }
+
+    modalClose.addEventListener('click', closeModal);
+    modalPrev.addEventListener('click', (e) => { e.stopPropagation(); navigate('prev'); });
+    modalNext.addEventListener('click', (e) => { e.stopPropagation(); navigate('next'); });
+
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal || e.target.classList.contains('modal-stage')) {
+            closeModal();
+        }
+    });
+
+    // ─── Modal zoom ──────────────────────────────────────────────────
     modalImage.addEventListener('click', (event) => {
+        event.stopPropagation();
         if (isZoomed) {
-            // Zoom Out
             modalImage.style.transform = 'scale(1)';
             modalImage.style.transformOrigin = 'center center';
             modalImage.style.cursor = 'zoom-in';
             isZoomed = false;
         } else {
-            // Zoom In
             const rect = modalImage.getBoundingClientRect();
-            // Calculate click position relative to the image (0 to 1)
             const x = (event.clientX - rect.left) / rect.width;
             const y = (event.clientY - rect.top) / rect.height;
-
             modalImage.style.transformOrigin = `${x * 100}% ${y * 100}%`;
-            modalImage.style.transform = 'scale(2)'; // Zoom factor (e.g., 2x)
+            modalImage.style.transform = 'scale(2)';
             modalImage.style.cursor = 'zoom-out';
             isZoomed = true;
         }
     });
-
-    // Filter button clicks
-    filterButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            filterButtons.forEach(btn => btn.classList.remove('active'));
-            button.classList.add('active');
-            const filterValue = button.getAttribute('data-filter');
-            currentFilter = filterValue; // Update current filter
-            displayImages(filterValue, isReversed ? 'alphabetical' : 'default'); // Pass current filter and current sort state
-        });
-    });
-
-    // Sort toggle click
-    if (sortToggle) {
-        sortToggle.addEventListener('click', (event) => {
-            event.preventDefault(); // Prevent any default button behavior
-            isReversed = !isReversed; // Toggle reverse state
-            sortToggle.textContent = isReversed ? '↓' : '↑'; // Show appropriate arrow
-            sortToggle.classList.toggle('active', isReversed); // Highlight when reversed
-            displayImages(currentFilter, isReversed ? 'alphabetical' : 'default'); // Pass current filter and new order
-        });
-    }
-
-    // Close modal listeners
-    closeButton.addEventListener('click', closeModal);
-    modal.addEventListener('click', (event) => {
-        // Close if clicked outside the image content
-        if (event.target === modal) {
-            closeModal();
-        }
-    });
-
-    // Close modal with Escape key
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape' && modal.classList.contains('show')) {
-            closeModal();
-        }
-    });
-
-    // --- Intro Text Toggle --- 
-    if (introToggle && introTextBox) { // Check if elements exist
-        introToggle.addEventListener('click', () => {
-            introTextBox.classList.toggle('show');
-        });
-    }
-
-    // --- Site Title Hover Effect --- 
-    if (siteTitle) { // Check if element exists
-        originalTitle = siteTitle.textContent; // Store the actual initial text
-        siteTitle.addEventListener('mouseenter', () => {
-            siteTitle.textContent = 'Just for fun :)';
-        });
-        siteTitle.addEventListener('mouseleave', () => {
-            siteTitle.textContent = originalTitle;
-        });
-    }
-
-    // --- Initial Load --- 
-    // loadAllImages(); // OLD METHOD
-    // applyFilter(); // OLD METHOD
-    // displayImages(); // Old initial call (defaulted to 'all')
-    displayImages('all', 'alphabetical'); // New initial call, matches the default active button and reverse alphabetical order
-    
-    // Set initial button text to show down arrow (Z-A)
-    if (sortToggle) {
-        sortToggle.textContent = '↓';
-        sortToggle.classList.add('active');
-    }
-
-    // --- Touch Event Listeners for Mobile ---
-    let touchStartY = 0;
-    let touchStartX = 0;
-    let touchStartTime = 0;
-    let isPinching = false;
-
-    modal.addEventListener('touchstart', (event) => {
-        if (isPinching || isZoomed) return; // Disable swipe if pinching or zoomed
-        if (event.touches.length > 1) {
-            isPinching = true;
-            return;
-        }
-        isPinching = false;
-        touchStartY = event.touches[0].clientY;
-        touchStartX = event.touches[0].clientX;
-        touchStartTime = new Date().getTime();
-    });
-
-    let scaling = false;
-    let isPinchedToZoom = false;
 
     modalImage.addEventListener('touchstart', (event) => {
         if (isZoomed && event.touches.length === 1) {
             lastTouchX = event.touches[0].clientX;
             lastTouchY = event.touches[0].clientY;
         }
-    });
+    }, { passive: true });
 
     modalImage.addEventListener('touchmove', (event) => {
         if (isZoomed && event.touches.length === 1) {
-            event.preventDefault(); // Prevent default behavior
-            const touchX = event.touches[0].clientX;
-            const touchY = event.touches[0].clientY;
-
-            const deltaX = (touchX - lastTouchX) * 0.6; // Slightly increased sensitivity
-            const deltaY = (touchY - lastTouchY) * 0.6; // Slightly increased sensitivity
-
-            const currentTransform = modalImage.style.transform.match(/translate\(([^)]+)\)/);
-            const currentTranslate = currentTransform ? currentTransform[1].split(',').map(parseFloat) : [0, 0];
-
-            const newTranslateX = currentTranslate[0] + deltaX;
-            const newTranslateY = currentTranslate[1] + deltaY;
-
-            // Calculate tighter boundaries
+            event.preventDefault();
+            const t = event.touches[0];
+            const deltaX = (t.clientX - lastTouchX) * 0.6;
+            const deltaY = (t.clientY - lastTouchY) * 0.6;
+            const m = modalImage.style.transform.match(/translate\(([^)]+)\)/);
+            const cur = m ? m[1].split(',').map(parseFloat) : [0, 0];
+            const nx = cur[0] + deltaX;
+            const ny = cur[1] + deltaY;
             const rect = modalImage.getBoundingClientRect();
-            const maxTranslateX = (rect.width * (2 - 1)) / 4; // Quarter of the zoomed width
-            const maxTranslateY = (rect.height * (2 - 1)) / 4; // Quarter of the zoomed height
-
-            // Apply tighter boundaries
-            const boundedTranslateX = Math.max(-maxTranslateX, Math.min(maxTranslateX, newTranslateX));
-            const boundedTranslateY = Math.max(-maxTranslateY, Math.min(maxTranslateY, newTranslateY));
-
-            modalImage.style.transform = `scale(2) translate(${boundedTranslateX}px, ${boundedTranslateY}px)`;
-
-            lastTouchX = touchX;
-            lastTouchY = touchY;
+            const maxX = (rect.width * (2 - 1)) / 4;
+            const maxY = (rect.height * (2 - 1)) / 4;
+            const bx = Math.max(-maxX, Math.min(maxX, nx));
+            const by = Math.max(-maxY, Math.min(maxY, ny));
+            modalImage.style.transform = `scale(2) translate(${bx}px, ${by}px)`;
+            lastTouchX = t.clientX;
+            lastTouchY = t.clientY;
         }
     }, { passive: false });
 
-    // Function to navigate images
-    function navigateImages(direction) {
-        const currentSrc = modalImage.src.split('/').pop();
-        const filteredImages = images.filter(img => currentFilter === 'all' || img.categories.includes(currentFilter));
-        const sortedImages = sortImages(filteredImages, isReversed ? 'alphabetical' : 'default');
-        const currentIndex = sortedImages.findIndex(img => img.filename === currentSrc);
-        let newIndex;
-
-        if (direction === 'right') {
-            newIndex = (currentIndex + 1) % sortedImages.length;
-        } else {
-            newIndex = (currentIndex - 1 + sortedImages.length) % sortedImages.length;
-        }
-
-        const newImage = sortedImages[newIndex];
-        const highQualitySrc = BASE_HIGH_QUALITY + newImage.filename;
-
-        // Show spinner
-        spinner.style.display = 'block';
-
-        // Load high-quality image
-        modalImage.src = highQualitySrc;
-
-        // Hide spinner once loaded
-        modalImage.onload = () => {
-            spinner.style.display = 'none';
-        };
-    }
-
-    // Prevent gesture events that could trigger zoom
-    document.addEventListener('gesturestart', function (e) {
-        e.preventDefault();
+    // ─── Keyboard ─────────────────────────────────────────────────────
+    document.addEventListener('keydown', (e) => {
+        if (!modal.classList.contains('show')) return;
+        if (e.key === 'Escape') closeModal();
+        if (e.key === 'ArrowRight') navigate('next');
+        if (e.key === 'ArrowLeft') navigate('prev');
     });
 
-}); 
+    // ─── Block default page zoom gestures ────────────────────────────
+    document.addEventListener('gesturestart', (e) => e.preventDefault());
+
+    // ─── Swipe to navigate (when not zoomed) ─────────────────────────
+    let swipeStartX = 0;
+    let swipeStartY = 0;
+    let swipeStartTime = 0;
+    modal.addEventListener('touchstart', (e) => {
+        if (isZoomed || e.touches.length > 1) return;
+        swipeStartX = e.touches[0].clientX;
+        swipeStartY = e.touches[0].clientY;
+        swipeStartTime = Date.now();
+    }, { passive: true });
+
+    modal.addEventListener('touchend', (e) => {
+        if (isZoomed) return;
+        const dx = e.changedTouches[0].clientX - swipeStartX;
+        const dy = e.changedTouches[0].clientY - swipeStartY;
+        const dt = Date.now() - swipeStartTime;
+        if (dt < 600 && Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) {
+            navigate(dx < 0 ? 'next' : 'prev');
+        }
+    }, { passive: true });
+
+    // ─── Initial render ──────────────────────────────────────────────
+    render();
+    openModalFromHash();
+
+    function openModalFromHash() {
+        if (!location.hash) return;
+        const target = decodeURIComponent(location.hash.slice(1));
+        const idx = currentList.findIndex(img => img.filename === target);
+        if (idx !== -1) openModal(idx);
+    }
+});

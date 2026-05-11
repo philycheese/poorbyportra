@@ -2,48 +2,56 @@
 <html lang="en">
 <head>
     <!--
-    poorbyportra - if your looking here, you should give me a job. pipr.tw@mgmail.com
+    poorbyportra - if your looking here, you should give me a job. pipr.tw@gmail.com
     -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>poorbyportra</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Poorbyportra</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="home.css">
 </head>
-<body>
-    <header>
-        <div class="site-title">POORBYPORTRA</div>
-        <nav>
+<body class="home">
+    <main class="home-main">
+        <section class="home-block home-block-info">
+            <p>A not so serious</p>
+            <p>photo journal.</p>
+        </section>
+
+        <nav class="home-block home-block-nav">
             <ul>
-                <li><button data-filter="all" class="active">All</button></li>
-                <li><button data-filter="landscape">Landscape</button></li>
+                <li><a href="photos.html">Photos</a></li>
+                <li><a href="https://instagram.com/poorbyportra" target="_blank" rel="noopener">Instagram</a></li>
+                <li><a href="mailto:pipr.tw@gmail.com">Email</a></li>
             </ul>
         </nav>
-    </header>
 
-    <main>
-        <div class="intro-container">
-            <div id="intro-toggle" class="intro-toggle">...</div>
-            <button id="sort-toggle" class="sort-btn" type="button">↑</button>
-            <div id="intro-text-box" class="intro-text-box">
-                <p>Not so serious photo journal.</p>
-            </div>
-        </div>
-        
-        <div id="image-grid" class="image-grid"></div>
+        <aside class="home-feature" aria-hidden="true">
+            <a id="home-feature-link" href="photos.html">
+                <img id="home-feature-image" src="" alt="">
+            </a>
+        </aside>
+
+        <section class="home-block home-block-wordmark" aria-hidden="true">
+            <h1>Poorbyportra.</h1>
+        </section>
     </main>
 
-    <div id="spinner" class="spinner" style="display: none;"></div>
-
-    <div id="modal" class="modal">
-        <span class="close-button">&times;</span>
-        <img class="modal-content" id="modal-image">
-    </div>
-
-    <script src="script.js"></script>
+    <script src="data.js"></script>
+    <script>
+        (() => {
+            const list = window.PORTRA_IMAGES || [];
+            if (!list.length) return;
+            const pick = list[Math.floor(Math.random() * list.length)];
+            const img = document.getElementById('home-feature-image');
+            const link = document.getElementById('home-feature-link');
+            if (!img || !link) return;
+            img.src = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_800,q_auto,f_auto/v1753994362/' + pick.filename;
+            img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
+            link.href = 'photos.html#' + encodeURIComponent(pick.filename);
+        })();
+    </script>
     <script defer src="https://cloud.umami.is/script.js" data-website-id="406b2854-4498-4aec-bb01-87c014bbe6af"></script>
-    <br>
 </body>
-</html> 
+</html>

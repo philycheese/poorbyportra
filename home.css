@@ -1,0 +1,165 @@
+/* ─── Landing page: Swiss / Inter (mobile-first) ────────────────────── */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+    background: #ffffff;
+    color: #000000;
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: "cv11", "ss01";
+}
+
+body.home {
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: opacity 0.15s ease;
+}
+
+a:hover { opacity: 0.45; }
+
+ul { list-style: none; }
+
+/* ─── Mobile layout (default) ───────────────────────────────────────── */
+
+.home-main {
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: 20px 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
+}
+
+.home-block-info p {
+    font-size: 18px;
+    font-weight: 500;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: #000;
+}
+
+.home-block-nav ul {
+    display: flex;
+    flex-direction: column;
+}
+
+.home-block-nav li {
+    border-top: 1px solid #e5e5e5;
+}
+
+.home-block-nav li:last-child {
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.home-block-nav a {
+    display: block;
+    padding: 14px 0;
+    font-size: 18px;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    color: #000;
+}
+
+.home-feature {
+    align-self: flex-end;
+    width: 56%;
+    max-width: 220px;
+    margin-top: 48px;
+    margin-right: 10%;
+}
+
+.home-feature a { display: block; }
+
+.home-feature img {
+    display: block;
+    width: 100%;
+    height: auto;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+.home-feature img.loaded { opacity: 1; }
+
+.home-block-wordmark {
+    margin-top: auto;
+    overflow: hidden;
+}
+
+.home-block-wordmark h1 {
+    font-size: clamp(40px, 11vw, 80px);
+    font-weight: 600;
+    line-height: 0.95;
+    letter-spacing: -0.05em;
+    color: #000;
+    white-space: nowrap;
+}
+
+/* ─── Tablet & desktop ──────────────────────────────────────────────── */
+
+@media (min-width: 700px) {
+    .home-main {
+        padding: 28px 32px 32px;
+        gap: 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 1fr auto;
+        align-items: start;
+        column-gap: 40px;
+    }
+
+    .home-block-info {
+        grid-column: 1;
+        grid-row: 1;
+    }
+
+    .home-block-nav {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: start;
+        margin-top: 0;
+        max-width: 360px;
+    }
+
+    .home-feature {
+        grid-column: 2;
+        grid-row: 1;
+        align-self: end;
+        justify-self: end;
+        width: 20vw;
+        max-width: 290px;
+        margin: 0 10% 60px 0;
+    }
+
+    .home-block-wordmark {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        margin-top: 0;
+    }
+
+    .home-block-info p { font-size: 22px; }
+
+    .home-block-nav a {
+        font-size: 20px;
+        padding: 16px 0;
+    }
+
+    .home-block-wordmark h1 {
+        font-size: clamp(90px, 13vw, 170px);
+    }
+}
+
+@media (min-width: 1200px) {
+    .home-main { padding: 32px 36px 36px; }
+
+    .home-block-info p { font-size: 24px; }
+
+    .home-block-nav a { font-size: 22px; }
+}
