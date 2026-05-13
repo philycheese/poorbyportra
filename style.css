@@ -121,7 +121,8 @@ button {
 .action-btn:hover,
 .filter-btn:hover { background: var(--color-btn-bg-hover); }
 
-.filter-btn.active {
+.filter-btn.active,
+.action-btn.active {
     background: var(--color-text);
     color: var(--color-bg);
 }
