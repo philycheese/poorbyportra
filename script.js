@@ -24,8 +24,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // BASE_THUMB: 800px-wide for the grid (small + fast)
     // BASE_HIGH:  2400px-wide, auto format/quality — sharp on retina + 4K
     //             without paying the cost of the full source (often 3–7 MB)
-    const BASE_THUMB = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_800,q_auto,f_auto/v1753994362/';
-    const BASE_HIGH = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_2400,q_auto,f_auto/v1753994362/';
+    const BASE_THUMB = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_800,q_auto,f_auto/';
+    const BASE_HIGH = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_2400,q_auto,f_auto/';
 
     // ─── State ───────────────────────────────────────────────────────
     let currentFilter = 'all';

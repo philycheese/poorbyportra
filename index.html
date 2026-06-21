@@ -47,7 +47,7 @@
             const img = document.getElementById('home-feature-image');
             const link = document.getElementById('home-feature-link');
             if (!img || !link) return;
-            img.src = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_800,q_auto,f_auto/v1753994362/' + pick.filename;
+            img.src = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_800,q_auto,f_auto/' + pick.filename;
             img.addEventListener('load', () => img.classList.add('loaded'), { once: true });
             link.href = 'photos.html#' + encodeURIComponent(pick.filename);
         })();
