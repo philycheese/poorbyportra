@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const fullSrc = BASE_HIGH + data.filename;
         modalImage.src = fullSrc;
         modalImage.alt = captionFor(data.filename);
-        modalCaption.textContent = `${captionFor(data.filename)}  ·  ${modalIndex + 1} / ${currentList.length}`;
+        modalCaption.textContent = `${modalIndex + 1} / ${currentList.length}`;
 
         modalImage.onload = () => {
             spinner.hidden = true;
