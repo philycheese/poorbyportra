@@ -471,5 +471,9 @@ window.PORTRA_IMAGES = [
     { filename: 'export-434.jpg', categories: ['all'] },
     { filename: 'export-435.jpg', categories: ['all'] },
     { filename: 'export-436.jpg', categories: ['all'] },
-    { filename: 'export-437.jpg', categories: ['all'] }
+    { filename: 'export-437.jpg', categories: ['all'] },
+    { filename: 'export-438.jpg', categories: ['all'] },
+    { filename: 'export-439.jpg', categories: ['all'] },
+    { filename: 'export-440.jpg', categories: ['landscape'] },
+    { filename: 'export-441.jpg', categories: ['all'] }
 ];
