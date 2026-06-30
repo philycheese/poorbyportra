@@ -189,15 +189,22 @@ button {
     max-height: 100%;
     width: 100%;
     height: 100%;
+    overflow: hidden;
+    touch-action: none;
 }
 
 .modal-image {
     display: block;
     max-width: 100%;
     max-height: 100%;
-    transition: transform 0.3s ease;
+    transform-origin: center center;
+    transition: opacity 0.25s ease, transform 0.22s ease;
     cursor: zoom-in;
     user-select: none;
+    -webkit-user-select: none;
+    -webkit-user-drag: none;
+    touch-action: none;
+    will-change: transform;
 }
 
 .modal-close,
@@ -228,16 +235,6 @@ button {
 .modal-nav-prev { left: 6px; }
 .modal-nav-next { right: 6px; }
 .modal-nav:hover { color: var(--color-text); background: var(--color-btn-bg); }
-
-.modal-caption {
-    position: absolute;
-    bottom: 14px;
-    left: 50%;
-    transform: translateX(-50%);
-    color: var(--color-muted);
-    font-size: var(--font-size-base);
-    white-space: nowrap;
-}
 
 /* ─── Spinner ───────────────────────────────────────────────────────── */
 

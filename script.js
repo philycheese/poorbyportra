@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const modal = document.getElementById('modal');
     const modalImage = document.getElementById('modal-image');
-    const modalCaption = document.getElementById('modal-caption');
     const modalClose = document.querySelector('.modal-close');
     const modalPrev = document.querySelector('.modal-nav-prev');
     const modalNext = document.querySelector('.modal-nav-next');
@@ -33,8 +32,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentList = []; // cached current sorted list
     let modalIndex = -1;
     let isZoomed = false;
-    let lastTouchX = 0;
-    let lastTouchY = 0;
 
     // ─── Prefetch state ──────────────────────────────────────────────
     const PREFETCH_CACHE_CAP = 60;       // max distinct URLs we've kicked off
@@ -211,10 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (prefetched.has(data.filename)) debugStats.hits++;
         else debugStats.misses++;
         renderDebug();
-        isZoomed = false;
-        modalImage.style.transform = 'scale(1)';
-        modalImage.style.transformOrigin = 'center center';
-        modalImage.style.cursor = 'zoom-in';
+        resetZoom();
 
         spinner.hidden = false;
         modalImage.style.opacity = '0';
@@ -222,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const fullSrc = BASE_HIGH + data.filename;
         modalImage.src = fullSrc;
         modalImage.alt = captionFor(data.filename);
-        modalCaption.textContent = `${modalIndex + 1} / ${currentList.length}`;
 
         modalImage.onload = () => {
             spinner.hidden = true;
@@ -238,9 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
         modal.classList.remove('show');
         modal.setAttribute('aria-hidden', 'true');
         document.body.style.overflow = '';
-        isZoomed = false;
-        modalImage.style.transform = 'scale(1)';
-        modalImage.style.transformOrigin = 'center center';
+        resetZoom();
         if (location.hash) {
             history.replaceState(null, '', location.pathname);
         }
@@ -316,55 +307,190 @@ document.addEventListener('DOMContentLoaded', () => {
     modalNext.addEventListener('click', (e) => { e.stopPropagation(); navigate('next'); });
 
     modal.addEventListener('click', (e) => {
+        if (Date.now() < suppressClickUntil) return;
         if (e.target === modal || e.target.classList.contains('modal-stage')) {
             closeModal();
         }
     });
 
     // ─── Modal zoom ──────────────────────────────────────────────────
+    const MIN_ZOOM = 1;
+    const MAX_ZOOM = 4;
+    const DOUBLE_TAP_ZOOM = 2.25;
+    const zoom = { scale: 1, x: 0, y: 0 };
+    let panStart = null;
+    let pinchStart = null;
+    let lastTapTime = 0;
+    let lastTapX = 0;
+    let lastTapY = 0;
+    let suppressClickUntil = 0;
+    let suppressSwipeUntil = 0;
+
+    function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
+    function distance(a, b) {
+        return Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY);
+    }
+
+    function midpoint(a, b) {
+        return {
+            x: (a.clientX + b.clientX) / 2,
+            y: (a.clientY + b.clientY) / 2
+        };
+    }
+
+    function baseImageGeometry() {
+        const rect = modalImage.getBoundingClientRect();
+        const scale = zoom.scale || 1;
+        return {
+            width: rect.width / scale,
+            height: rect.height / scale,
+            centerX: rect.left + rect.width / 2 - zoom.x,
+            centerY: rect.top + rect.height / 2 - zoom.y
+        };
+    }
+
+    function clampZoomPosition(base = baseImageGeometry()) {
+        const stageRect = modal.querySelector('.modal-stage').getBoundingClientRect();
+        const maxX = Math.max(0, (base.width * zoom.scale - stageRect.width) / 2);
+        const maxY = Math.max(0, (base.height * zoom.scale - stageRect.height) / 2);
+        zoom.x = clamp(zoom.x, -maxX, maxX);
+        zoom.y = clamp(zoom.y, -maxY, maxY);
+        if (zoom.scale <= MIN_ZOOM + 0.001) {
+            zoom.scale = MIN_ZOOM;
+            zoom.x = 0;
+            zoom.y = 0;
+        }
+        isZoomed = zoom.scale > MIN_ZOOM + 0.01;
+    }
+
+    function applyZoom({ animate = false } = {}) {
+        modalImage.style.transition = animate
+            ? 'opacity 0.25s ease, transform 0.22s ease'
+            : 'opacity 0.25s ease';
+        modalImage.style.transform = `translate3d(${zoom.x}px, ${zoom.y}px, 0) scale(${zoom.scale})`;
+        modalImage.style.cursor = isZoomed ? 'zoom-out' : 'zoom-in';
+    }
+
+    function resetZoom({ animate = false } = {}) {
+        zoom.scale = MIN_ZOOM;
+        zoom.x = 0;
+        zoom.y = 0;
+        isZoomed = false;
+        panStart = null;
+        pinchStart = null;
+        applyZoom({ animate });
+    }
+
+    function zoomTo(nextScale, focalX, focalY, { animate = false } = {}) {
+        const oldScale = zoom.scale;
+        const base = baseImageGeometry();
+        const scale = clamp(nextScale, MIN_ZOOM, MAX_ZOOM);
+        if (scale <= MIN_ZOOM + 0.01) {
+            resetZoom({ animate });
+            return;
+        }
+
+        const imageX = (focalX - base.centerX - zoom.x) / oldScale;
+        const imageY = (focalY - base.centerY - zoom.y) / oldScale;
+        zoom.scale = scale;
+        zoom.x = focalX - base.centerX - imageX * scale;
+        zoom.y = focalY - base.centerY - imageY * scale;
+        clampZoomPosition(base);
+        applyZoom({ animate });
+    }
+
+    function panBy(deltaX, deltaY) {
+        zoom.x += deltaX;
+        zoom.y += deltaY;
+        clampZoomPosition();
+        applyZoom();
+    }
+
     modalImage.addEventListener('click', (event) => {
         event.stopPropagation();
+        if (Date.now() < suppressClickUntil) return;
         if (isZoomed) {
-            modalImage.style.transform = 'scale(1)';
-            modalImage.style.transformOrigin = 'center center';
-            modalImage.style.cursor = 'zoom-in';
-            isZoomed = false;
+            resetZoom({ animate: true });
         } else {
-            const rect = modalImage.getBoundingClientRect();
-            const x = (event.clientX - rect.left) / rect.width;
-            const y = (event.clientY - rect.top) / rect.height;
-            modalImage.style.transformOrigin = `${x * 100}% ${y * 100}%`;
-            modalImage.style.transform = 'scale(2)';
-            modalImage.style.cursor = 'zoom-out';
-            isZoomed = true;
+            zoomTo(DOUBLE_TAP_ZOOM, event.clientX, event.clientY, { animate: true });
         }
     });
 
     modalImage.addEventListener('touchstart', (event) => {
-        if (isZoomed && event.touches.length === 1) {
-            lastTouchX = event.touches[0].clientX;
-            lastTouchY = event.touches[0].clientY;
+        if (event.touches.length === 2) {
+            event.preventDefault();
+            pinchStart = {
+                distance: distance(event.touches[0], event.touches[1]),
+                scale: zoom.scale
+            };
+            panStart = null;
+            suppressClickUntil = Date.now() + 500;
+            suppressSwipeUntil = Date.now() + 500;
+            return;
         }
-    }, { passive: true });
+
+        if (event.touches.length === 1 && isZoomed) {
+            const touch = event.touches[0];
+            panStart = { x: touch.clientX, y: touch.clientY };
+            suppressClickUntil = Date.now() + 250;
+        }
+    }, { passive: false });
 
     modalImage.addEventListener('touchmove', (event) => {
-        if (isZoomed && event.touches.length === 1) {
+        if (event.touches.length === 2 && pinchStart) {
             event.preventDefault();
-            const t = event.touches[0];
-            const deltaX = (t.clientX - lastTouchX) * 0.6;
-            const deltaY = (t.clientY - lastTouchY) * 0.6;
-            const m = modalImage.style.transform.match(/translate\(([^)]+)\)/);
-            const cur = m ? m[1].split(',').map(parseFloat) : [0, 0];
-            const nx = cur[0] + deltaX;
-            const ny = cur[1] + deltaY;
-            const rect = modalImage.getBoundingClientRect();
-            const maxX = (rect.width * (2 - 1)) / 4;
-            const maxY = (rect.height * (2 - 1)) / 4;
-            const bx = Math.max(-maxX, Math.min(maxX, nx));
-            const by = Math.max(-maxY, Math.min(maxY, ny));
-            modalImage.style.transform = `scale(2) translate(${bx}px, ${by}px)`;
-            lastTouchX = t.clientX;
-            lastTouchY = t.clientY;
+            const center = midpoint(event.touches[0], event.touches[1]);
+            const ratio = distance(event.touches[0], event.touches[1]) / pinchStart.distance;
+            zoomTo(pinchStart.scale * ratio, center.x, center.y);
+            suppressClickUntil = Date.now() + 500;
+            suppressSwipeUntil = Date.now() + 500;
+            return;
+        }
+
+        if (event.touches.length === 1 && isZoomed && panStart) {
+            event.preventDefault();
+            const touch = event.touches[0];
+            panBy(touch.clientX - panStart.x, touch.clientY - panStart.y);
+            panStart = { x: touch.clientX, y: touch.clientY };
+            suppressClickUntil = Date.now() + 350;
+            suppressSwipeUntil = Date.now() + 350;
+        }
+    }, { passive: false });
+
+    modalImage.addEventListener('touchend', (event) => {
+        if (event.touches.length < 2) {
+            pinchStart = null;
+        }
+        if (event.touches.length === 1 && isZoomed) {
+            const touch = event.touches[0];
+            panStart = { x: touch.clientX, y: touch.clientY };
+        } else {
+            panStart = null;
+        }
+
+        if (event.changedTouches.length === 1 && event.touches.length === 0) {
+            const touch = event.changedTouches[0];
+            const now = Date.now();
+            suppressClickUntil = now + 350;
+            const closeToLastTap = Math.hypot(touch.clientX - lastTapX, touch.clientY - lastTapY) < 35;
+            if (now - lastTapTime < 280 && closeToLastTap) {
+                event.preventDefault();
+                if (isZoomed) {
+                    resetZoom({ animate: true });
+                } else {
+                    zoomTo(DOUBLE_TAP_ZOOM, touch.clientX, touch.clientY, { animate: true });
+                }
+                suppressClickUntil = now + 500;
+                suppressSwipeUntil = now + 350;
+                lastTapTime = 0;
+            } else {
+                lastTapTime = now;
+                lastTapX = touch.clientX;
+                lastTapY = touch.clientY;
+            }
         }
     }, { passive: false });
 
@@ -384,14 +510,14 @@ document.addEventListener('DOMContentLoaded', () => {
     let swipeStartY = 0;
     let swipeStartTime = 0;
     modal.addEventListener('touchstart', (e) => {
-        if (isZoomed || e.touches.length > 1) return;
+        if (Date.now() < suppressSwipeUntil || isZoomed || e.touches.length > 1) return;
         swipeStartX = e.touches[0].clientX;
         swipeStartY = e.touches[0].clientY;
         swipeStartTime = Date.now();
     }, { passive: true });
 
     modal.addEventListener('touchend', (e) => {
-        if (isZoomed) return;
+        if (Date.now() < suppressSwipeUntil || isZoomed) return;
         const dx = e.changedTouches[0].clientX - swipeStartX;
         const dy = e.changedTouches[0].clientY - swipeStartY;
         const dt = Date.now() - swipeStartTime;
