@@ -22,9 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── Cloudinary URLs ─────────────────────────────────────────────
     const CLOUDINARY_BASE = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/';
     const THUMB_TRANSFORM = 'w_800,q_auto,f_auto';
+    const PREVIEW_TRANSFORM = 'c_limit,w_1200,q_auto,f_auto';
     const MODAL_TRANSFORM = 'c_limit,w_3200,q_auto:best,f_auto';
     const ZOOM_TRANSFORM = 'c_limit,w_4800,q_auto:best,f_auto';
-    const MODAL_SRCSET_WIDTHS = [1600, 2400, 3200, 4800];
+    const MODAL_SRCSET_WIDTHS = [1600, 2400, 3200];
 
     // ─── State ───────────────────────────────────────────────────────
     let currentFilter = 'all';
@@ -32,7 +33,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentList = []; // cached current sorted list
     let modalIndex = -1;
     let currentModalFilename = '';
+    let displaySourceFilename = '';
     let zoomSourceFilename = '';
+    let displayLoader = null;
+    let zoomLoader = null;
     let isZoomed = false;
 
     // ─── Prefetch state ──────────────────────────────────────────────
@@ -50,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Image() doesn't expose Content-Length, so we sample a handful of files
     // with HEAD-style fetches up front and use the running average as the
     // per-entry estimate in the cache-size readout.
-    let avgBytes = 2_200_000;            // initial guess (~w_3200 JPEG/WebP)
+    let avgBytes = 180_000;              // initial guess (~w_1200 preview)
     const sampledSizes = [];             // running samples to refine avgBytes
     const debugStats = {
         hits: 0,          // modal images that were already prefetched
@@ -63,8 +67,16 @@ document.addEventListener('DOMContentLoaded', () => {
         return `${CLOUDINARY_BASE}${transform}/${filename}`;
     }
 
+    function thumbSrc(filename) {
+        return cloudinaryUrl(THUMB_TRANSFORM, filename);
+    }
+
     function modalSrc(filename) {
         return cloudinaryUrl(MODAL_TRANSFORM, filename);
+    }
+
+    function previewSrc(filename) {
+        return cloudinaryUrl(PREVIEW_TRANSFORM, filename);
     }
 
     function modalSrcset(filename) {
@@ -79,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function sampleAverageSize(filename) {
         if (sampledSizes.length >= 5) return; // don't keep sampling forever
-        fetch(modalSrc(filename), { method: 'HEAD', credentials: 'omit' })
+        fetch(previewSrc(filename), { method: 'HEAD', credentials: 'omit' })
             .then(r => {
                 const len = parseInt(r.headers.get('content-length') || '0', 10);
                 if (len > 0) {
@@ -128,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wrap.className = 'grid-item-image';
 
             const img = document.createElement('img');
-            img.src = cloudinaryUrl(THUMB_TRANSFORM, imgData.filename);
+            img.src = thumbSrc(imgData.filename);
             img.alt = captionFor(imgData.filename);
             img.loading = 'lazy';
             img.decoding = 'async';
@@ -167,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (priority !== 'auto' && 'fetchPriority' in img) {
             img.fetchPriority = priority;
         }
-        img.src = modalSrc(filename);
+        img.src = previewSrc(filename);
 
         // Opportunistically refine the byte-size estimate via cheap HEAD pings
         // on the first few prefetches. The HUD shows estimated cache usage.
@@ -228,25 +240,44 @@ document.addEventListener('DOMContentLoaded', () => {
         renderDebug();
         resetZoom();
         currentModalFilename = data.filename;
+        displaySourceFilename = '';
         zoomSourceFilename = '';
+        displayLoader = null;
+        zoomLoader = null;
 
-        spinner.hidden = false;
-        modalImage.style.opacity = '0';
-
-        const fullSrc = modalSrc(data.filename);
-        modalImage.sizes = '100vw';
-        modalImage.srcset = modalSrcset(data.filename);
-        modalImage.src = fullSrc;
+        spinner.hidden = true;
+        modalImage.onload = null;
+        modalImage.onerror = null;
+        modalImage.removeAttribute('sizes');
+        modalImage.removeAttribute('srcset');
+        modalImage.src = thumbSrc(data.filename);
         modalImage.alt = captionFor(data.filename);
+        modalImage.style.opacity = '1';
 
-        modalImage.onload = () => {
-            spinner.hidden = true;
-            modalImage.style.opacity = '1';
+        loadDisplaySource(data.filename);
+    }
+
+    function loadDisplaySource(filename) {
+        if (!filename || displaySourceFilename === filename) return;
+        displaySourceFilename = filename;
+
+        const sharp = new Image();
+        displayLoader = sharp;
+        sharp.decoding = 'async';
+        sharp.sizes = '100vw';
+        sharp.srcset = modalSrcset(filename);
+        if ('fetchPriority' in sharp) {
+            sharp.fetchPriority = 'high';
+        }
+        sharp.onload = () => {
+            if (currentModalFilename !== filename) return;
+            if (modalImage.src === zoomSrc(filename) || modalImage.currentSrc === zoomSrc(filename)) return;
+
+            modalImage.sizes = '100vw';
+            modalImage.srcset = modalSrcset(filename);
+            modalImage.src = sharp.currentSrc || modalSrc(filename);
         };
-        modalImage.onerror = () => {
-            spinner.hidden = true;
-            modalImage.style.opacity = '1';
-        };
+        sharp.src = modalSrc(filename);
     }
 
     function closeModal() {
@@ -437,6 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         zoomSourceFilename = data.filename;
         const hiRes = new Image();
+        zoomLoader = hiRes;
         hiRes.decoding = 'async';
         if ('fetchPriority' in hiRes) {
             hiRes.fetchPriority = 'high';
