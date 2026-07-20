@@ -20,17 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const spinner = document.getElementById('spinner');
 
     // ─── Cloudinary URLs ─────────────────────────────────────────────
-    // BASE_THUMB: 800px-wide for the grid (small + fast)
-    // BASE_HIGH:  2400px-wide, auto format/quality — sharp on retina + 4K
-    //             without paying the cost of the full source (often 3–7 MB)
-    const BASE_THUMB = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_800,q_auto,f_auto/';
-    const BASE_HIGH = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/w_2400,q_auto,f_auto/';
+    const CLOUDINARY_BASE = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/';
+    const THUMB_TRANSFORM = 'w_800,q_auto,f_auto';
+    const MODAL_TRANSFORM = 'c_limit,w_3200,q_auto:best,f_auto';
+    const ZOOM_TRANSFORM = 'c_limit,w_4800,q_auto:best,f_auto';
+    const MODAL_SRCSET_WIDTHS = [1600, 2400, 3200, 4800];
 
     // ─── State ───────────────────────────────────────────────────────
     let currentFilter = 'all';
     let isReversed = true; // default Z→A like the original
     let currentList = []; // cached current sorted list
     let modalIndex = -1;
+    let currentModalFilename = '';
+    let zoomSourceFilename = '';
     let isZoomed = false;
 
     // ─── Prefetch state ──────────────────────────────────────────────
@@ -43,12 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
     let preloadEnabled = localStorage.getItem('portra:preload') !== 'off'; // default on
 
     // ─── Debug HUD state (only active when enabled) ─────────────────
-    // We prefetch via <img>/Image() so the cache key matches what the modal
-    // <img> requests (same Accept header → Vary:Accept resolves to one entry).
+    // We prefetch via <img>/Image() so requests use the same Accept/header
+    // behavior as real image loads.
     // Image() doesn't expose Content-Length, so we sample a handful of files
     // with HEAD-style fetches up front and use the running average as the
     // per-entry estimate in the cache-size readout.
-    let avgBytes = 1_200_000;            // initial guess (~w_2400 JPEG/WebP)
+    let avgBytes = 2_200_000;            // initial guess (~w_3200 JPEG/WebP)
     const sampledSizes = [];             // running samples to refine avgBytes
     const debugStats = {
         hits: 0,          // modal images that were already prefetched
@@ -57,9 +59,27 @@ document.addEventListener('DOMContentLoaded', () => {
         lastAction: '—'   // human-readable status of last open/nav
     };
 
+    function cloudinaryUrl(transform, filename) {
+        return `${CLOUDINARY_BASE}${transform}/${filename}`;
+    }
+
+    function modalSrc(filename) {
+        return cloudinaryUrl(MODAL_TRANSFORM, filename);
+    }
+
+    function modalSrcset(filename) {
+        return MODAL_SRCSET_WIDTHS
+            .map(width => `${cloudinaryUrl(`c_limit,w_${width},q_auto:best,f_auto`, filename)} ${width}w`)
+            .join(', ');
+    }
+
+    function zoomSrc(filename) {
+        return cloudinaryUrl(ZOOM_TRANSFORM, filename);
+    }
+
     function sampleAverageSize(filename) {
         if (sampledSizes.length >= 5) return; // don't keep sampling forever
-        fetch(BASE_HIGH + filename, { method: 'HEAD', credentials: 'omit' })
+        fetch(modalSrc(filename), { method: 'HEAD', credentials: 'omit' })
             .then(r => {
                 const len = parseInt(r.headers.get('content-length') || '0', 10);
                 if (len > 0) {
@@ -108,7 +128,7 @@ document.addEventListener('DOMContentLoaded', () => {
             wrap.className = 'grid-item-image';
 
             const img = document.createElement('img');
-            img.src = BASE_THUMB + imgData.filename;
+            img.src = cloudinaryUrl(THUMB_TRANSFORM, imgData.filename);
             img.alt = captionFor(imgData.filename);
             img.loading = 'lazy';
             img.decoding = 'async';
@@ -141,15 +161,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         prefetched.add(filename);
 
-        // Use Image() so the browser request shares the cache key (Accept,
-        // User-Agent, Save-Data) of the modal's <img>. fetch() in CORS mode
-        // sends Accept: */* which Cloudinary's Vary:Accept treats as a
-        // different entry — defeats the whole purpose.
+        // Use Image() so Cloudinary sees a real image request. fetch() in
+        // CORS mode sends Accept: */*, which can create a separate cache entry.
         const img = new Image();
         if (priority !== 'auto' && 'fetchPriority' in img) {
             img.fetchPriority = priority;
         }
-        img.src = BASE_HIGH + filename;
+        img.src = modalSrc(filename);
 
         // Opportunistically refine the byte-size estimate via cheap HEAD pings
         // on the first few prefetches. The HUD shows estimated cache usage.
@@ -209,11 +227,15 @@ document.addEventListener('DOMContentLoaded', () => {
         else debugStats.misses++;
         renderDebug();
         resetZoom();
+        currentModalFilename = data.filename;
+        zoomSourceFilename = '';
 
         spinner.hidden = false;
         modalImage.style.opacity = '0';
 
-        const fullSrc = BASE_HIGH + data.filename;
+        const fullSrc = modalSrc(data.filename);
+        modalImage.sizes = '100vw';
+        modalImage.srcset = modalSrcset(data.filename);
         modalImage.src = fullSrc;
         modalImage.alt = captionFor(data.filename);
 
@@ -393,6 +415,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        ensureZoomSource();
         const imageX = (focalX - base.centerX - zoom.x) / oldScale;
         const imageY = (focalY - base.centerY - zoom.y) / oldScale;
         zoom.scale = scale;
@@ -400,6 +423,32 @@ document.addEventListener('DOMContentLoaded', () => {
         zoom.y = focalY - base.centerY - imageY * scale;
         clampZoomPosition(base);
         applyZoom({ animate });
+    }
+
+    function ensureZoomSource() {
+        const data = currentList[modalIndex];
+        if (!data || zoomSourceFilename === data.filename) return;
+
+        const fullZoomSrc = zoomSrc(data.filename);
+        if (modalImage.src === fullZoomSrc || modalImage.currentSrc === fullZoomSrc) {
+            zoomSourceFilename = data.filename;
+            return;
+        }
+
+        zoomSourceFilename = data.filename;
+        const hiRes = new Image();
+        hiRes.decoding = 'async';
+        if ('fetchPriority' in hiRes) {
+            hiRes.fetchPriority = 'high';
+        }
+        hiRes.onload = () => {
+            if (currentModalFilename === data.filename) {
+                modalImage.removeAttribute('sizes');
+                modalImage.removeAttribute('srcset');
+                modalImage.src = fullZoomSrc;
+            }
+        };
+        hiRes.src = fullZoomSrc;
     }
 
     function panBy(deltaX, deltaY) {
