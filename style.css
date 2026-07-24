@@ -222,19 +222,25 @@ button {
 .modal-close {
     top: 10px;
     right: 12px;
+    z-index: 2;
     font-size: 30px;
     padding: 4px 10px;
 }
 .modal-close:hover { color: var(--color-text); background: var(--color-btn-bg); }
 
 .modal-nav {
-    top: 50%;
-    transform: translateY(-50%);
+    top: 0;
+    bottom: 0;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
     font-size: 32px;
-    padding: 4px 8px;
+    padding: 0;
 }
-.modal-nav-prev { left: 6px; }
-.modal-nav-next { right: 6px; }
+.modal-nav-prev { left: 0; }
+.modal-nav-next { right: 0; }
 .modal-nav:hover { color: var(--color-text); background: var(--color-btn-bg); }
 
 /* ─── Spinner ───────────────────────────────────────────────────────── */
@@ -274,9 +280,10 @@ button {
     .header-actions { margin-top: 6px; }
     .modal { padding: 60px 30px; }
     .modal-close { top: 14px; right: 20px; font-size: 32px; }
-    .modal-nav { font-size: 36px; padding: 6px 12px; }
-    .modal-nav-prev { left: 18px; }
-    .modal-nav-next { right: 18px; }
+    .modal-nav {
+        width: 92px;
+        font-size: 36px;
+    }
 }
 
 @media (min-width: 900px) {
