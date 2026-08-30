@@ -22,10 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ─── Cloudinary URLs ─────────────────────────────────────────────
     const CLOUDINARY_BASE = 'https://res.cloudinary.com/dyy8mqxwi/image/upload/';
     const THUMB_TRANSFORM = 'w_800,q_auto,f_auto';
-    const PREVIEW_TRANSFORM = 'c_limit,w_1800,q_auto:good,f_auto';
-    const MODAL_TRANSFORM = 'c_limit,w_3200,q_auto:best,f_auto';
-    const ZOOM_TRANSFORM = 'c_limit,w_4800,q_auto:best,f_auto';
-    const MODAL_SRCSET_WIDTHS = [1800, 2400, 3200];
+    const PREVIEW_TRANSFORM = 'c_limit,w_2200,q_auto:good,f_auto';
 
     // ─── State ───────────────────────────────────────────────────────
     let currentFilter = 'all';
@@ -54,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Image() doesn't expose Content-Length, so we sample a handful of files
     // with HEAD-style fetches up front and use the running average as the
     // per-entry estimate in the cache-size readout.
-    let avgBytes = 420_000;              // initial guess (~w_1800 preview)
+    let avgBytes = 650_000;              // initial guess (~w_2200 preview)
     const sampledSizes = [];             // running samples to refine avgBytes
     const debugStats = {
         hits: 0,          // modal images that were already prefetched
@@ -72,21 +69,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function modalSrc(filename) {
-        return cloudinaryUrl(MODAL_TRANSFORM, filename);
+        return `${CLOUDINARY_BASE}${filename}`;
     }
 
     function previewSrc(filename) {
         return cloudinaryUrl(PREVIEW_TRANSFORM, filename);
     }
 
-    function modalSrcset(filename) {
-        return MODAL_SRCSET_WIDTHS
-            .map(width => `${cloudinaryUrl(`c_limit,w_${width},q_auto:best,f_auto`, filename)} ${width}w`)
-            .join(', ');
-    }
-
     function zoomSrc(filename) {
-        return cloudinaryUrl(ZOOM_TRANSFORM, filename);
+        return modalSrc(filename);
     }
 
     function sampleAverageSize(filename) {
@@ -262,10 +253,9 @@ document.addEventListener('DOMContentLoaded', () => {
         displaySourceFilename = filename;
 
         const sharp = new Image();
+        const fullSource = modalSrc(filename);
         displayLoader = sharp;
         sharp.decoding = 'async';
-        sharp.sizes = '100vw';
-        sharp.srcset = modalSrcset(filename);
         if ('fetchPriority' in sharp) {
             sharp.fetchPriority = 'high';
         }
@@ -273,11 +263,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (currentModalFilename !== filename) return;
             if (modalImage.src === zoomSrc(filename) || modalImage.currentSrc === zoomSrc(filename)) return;
 
-            modalImage.sizes = '100vw';
-            modalImage.srcset = modalSrcset(filename);
-            modalImage.src = sharp.currentSrc || modalSrc(filename);
+            modalImage.removeAttribute('sizes');
+            modalImage.removeAttribute('srcset');
+            modalImage.src = fullSource;
         };
-        sharp.src = modalSrc(filename);
+        sharp.src = fullSource;
     }
 
     function closeModal() {

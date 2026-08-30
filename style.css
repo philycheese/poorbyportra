@@ -241,7 +241,12 @@ button {
 }
 .modal-nav-prev { left: 0; }
 .modal-nav-next { right: 0; }
-.modal-nav:hover { color: var(--color-text); background: var(--color-btn-bg); }
+.modal-nav:hover,
+.modal-nav:active,
+.modal-nav:focus {
+    color: var(--color-text);
+    background: transparent;
+}
 
 /* ─── Spinner ───────────────────────────────────────────────────────── */
 
