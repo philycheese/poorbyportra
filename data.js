@@ -589,5 +589,6 @@ window.PORTRA_IMAGES = [
     { filename: 'export-552.jpg', categories: ['all'] },
     { filename: 'export-553.jpg', categories: ['all'] },
     { filename: 'export-554.jpg', categories: ['all'] },
-    { filename: 'export-555.jpg', categories: ['all'] }
+    { filename: 'export-555.jpg', categories: ['all'] },
+    { filename: 'export-556.jpg', categories: ['all'] }
 ];
